@@ -1,0 +1,22 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+*.vs/
+
+# Angular
+TaskFlow.Web/node_modules/
+TaskFlow.Web/dist/
+TaskFlow.Web/.angular/
+
+# IDE
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Misc
+*.log

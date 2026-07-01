@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "angular-dev",
+      "runtimeExecutable": "./node_modules/.bin/ng",
+      "runtimeArgs": ["serve", "--port", "4200"],
+      "port": 4200,
+      "cwd": "TaskFlow.Web"
+    }
+  ]
+}
