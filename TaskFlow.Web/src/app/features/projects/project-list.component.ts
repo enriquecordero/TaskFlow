@@ -1,5 +1,4 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ProjectService } from '../../services/project.service';
 import { ProjectResponse } from '../../models/project.model';
@@ -7,7 +6,7 @@ import { ProjectResponse } from '../../models/project.model';
 @Component({
   selector: 'app-project-list',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   template: `
     <div class="container">
       <h2>Proyectos</h2>

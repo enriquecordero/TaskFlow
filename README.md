@@ -198,8 +198,8 @@ git clone https://github.com/enriquecordero/TaskFlow.git
 cd TaskFlow
 
 # Backend
-dotnet restore
-dotnet build
+dotnet restore TaskFlow.Api
+dotnet build TaskFlow.Api
 
 # Frontend
 cd TaskFlow.Web
@@ -245,6 +245,8 @@ Espera a ver: `Local: http://localhost:4200/`
 | Ej. 6 | MCP | 25 min |
 | Ej. 7 | Todo junto + cierre | 20 min |
 | | **Total** | **≈ 3h 30min** |
+
+> **Nota:** Los **Hooks** (la 6ta customization) quedan fuera del alcance de este taller. Son comandos que se ejecutan automaticamente en puntos del ciclo del agente (ej. antes de guardar un archivo). Puedes explorarlos en la [documentacion oficial](https://code.visualstudio.com/docs/agent-customization/overview).
 
 ---
 
@@ -343,7 +345,9 @@ Compara con el resultado del Ejercicio 0. Ahora el resultado **ya respeta DTOs, 
 
 ### Paso 2.1: Instructions de C#
 
-El repo ya incluye [`.github/instructions/csharp.instructions.md`](.github/instructions/csharp.instructions.md) con `applyTo: "**/*.cs"`. Define convenciones de C#: records para DTOs, `AsNoTracking()`, `Results.Problem`, etc.
+El repo ya incluye [`.github/instructions/csharp.instructions.md`](.github/instructions/csharp.instructions.md) con `applyTo: "TaskFlow.Api/**/*.cs"`. Define convenciones de C#: records para DTOs, `AsNoTracking()`, `Results.Problem`, etc.
+
+> **Por que no `**/*.cs`?** Si aplicara a todo el C#, las reglas de endpoints (`AsNoTracking`, `Results.Problem`) tambien cargarian al editar tests, donde no aplican. Scoping al proyecto de la API mantiene cada capa con sus reglas. Ese es el punto de `applyTo`.
 
 ---
 
@@ -359,7 +363,15 @@ El repo incluye [`.github/instructions/angular.instructions.md`](.github/instruc
 
 ---
 
-### Paso 2.4: Comprobarlo
+### Paso 2.4: Instructions de tests Angular
+
+El repo incluye [`.github/instructions/angular-tests.instructions.md`](.github/instructions/angular-tests.instructions.md) con `applyTo: "TaskFlow.Web/**/*.spec.ts"`. Define: Jasmine + Karma, `TestBed`, `provideHttpClientTesting`, `HttpTestingController`.
+
+Fijate en el glob: solo aplica a archivos `.spec.ts` dentro de `TaskFlow.Web/`. Esto demuestra que puedes tener **multiples instructions para la misma tecnologia** con globs cada vez mas especificos.
+
+---
+
+### Paso 2.5: Comprobarlo
 
 **Prueba backend — pide un test sin explicar tu estilo:**
 
@@ -397,7 +409,7 @@ El repo incluye [`.github/prompts/nuevo-recurso.prompt.md`](.github/prompts/nuev
 
 ### Paso 3.2: Prompt para componentes Angular
 
-El repo incluye [`.github/prompts/nuevo-componente.prompt.md`](.github/prompts/nuevo-componente.prompt.md). Crea un componente Angular completo: modelo, servicio, componente standalone con signals, ruta con lazy loading y link de navegacion.
+El repo incluye [`.github/prompts/nuevo-componente.prompt.md`](.github/prompts/nuevo-componente.prompt.md). Crea un componente Angular completo: modelo, servicio, componente standalone con signals, ruta con lazy loading, link de navegacion y un test del servicio (`.spec.ts`).
 
 ---
 
@@ -469,6 +481,8 @@ Crea un endpoint para buscar tareas por titulo.
 
 > **Punto clave:** Cambias de rol en un clic, sin volver a explicar que esperas de un "revisor" o un "builder". El rol vive en el repo.
 
+> **Agents vs Prompt Files:** ambos pueden generar codigo, pero cumplen roles distintos. Usa un **prompt file** (`/nuevo-recurso`) cuando quieras un resultado one-shot y predecible — siempre los mismos pasos. Usa un **agent** (`api-builder`) cuando quieras una conversacion iterativa donde el agente toma decisiones segun el contexto.
+
 **Deshaz los cambios** antes de continuar.
 
 ---
@@ -481,7 +495,11 @@ Crea un endpoint para buscar tareas por titulo.
 
 ### Paso 5.1: Skill de migraciones EF Core
 
-El repo incluye [`.github/skills/migracion-ef/SKILL.md`](.github/skills/migracion-ef/SKILL.md). Ensena a Copilot el procedimiento para crear y aplicar migraciones, e incluye un script de apoyo.
+El repo incluye [`.github/skills/migracion-ef/SKILL.md`](.github/skills/migracion-ef/SKILL.md). Ensena a Copilot el procedimiento para crear y aplicar migraciones.
+
+El skill incluye un **script auxiliar** (`crear-migracion.sh`) que automatiza todo el procedimiento en un solo comando: compila, crea la migracion y la aplica. Esto demuestra que los skills **pueden contener archivos adicionales** (scripts, templates, configs) junto al `SKILL.md`.
+
+> **Nota:** Este proyecto usa `InMemoryDatabase`. Las migraciones se crean pero no tienen efecto real — es un ejercicio pedagogico. Con un proveedor real (SQL Server, PostgreSQL) los pasos son identicos.
 
 **Anatomia de un skill — el frontmatter es clave:**
 
@@ -534,6 +552,8 @@ Anadi un campo DueDate a la entidad TaskItem. Necesito reflejarlo en la base de 
 
 **Verificar:** Copilot detecta que tu tarea coincide con la `description` del skill, **carga el procedimiento por su cuenta** y sigue los pasos.
 
+> **Si no se carga automaticamente:** la auto-carga depende de que la descripcion del skill coincida con tu peticion. Si no funciona, invocalo directamente con `/migracion-ef`. Ambas formas son validas.
+
 > **Instructions vs Skills:** las *instructions* son reglas siempre presentes (el *como* escribir). Los *skills* son procedimientos cargados bajo demanda (el *como hacer una tarea concreta*). Los skills pueden traer scripts y son portables entre herramientas.
 
 **Deshaz los cambios** antes de continuar.
@@ -553,10 +573,13 @@ El repo incluye [`.vscode/mcp.json`](.vscode/mcp.json) con dos servidores:
 - **github** (HTTP): consultar issues y PRs del repo
 - **filesystem** (stdio, via `npx`): acceso controlado a archivos del proyecto
 
-```jsonc
+```json
 {
   "servers": {
-    "github": { "type": "http", "url": "https://api.githubcopilot.com/mcp/" },
+    "github": {
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp/"
+    },
     "filesystem": {
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-filesystem", "${workspaceFolder}"]
@@ -606,6 +629,10 @@ empezar por la feature de notificaciones.
 
 > **Objetivo:** ver como las capas se suman.
 
+---
+
+### Paso 7.1: El prompt de una frase
+
 Empieza una conversacion **nueva y limpia** y pide:
 
 ```
@@ -632,6 +659,20 @@ notificaciones de un usuario. Que cambie el modelo de datos si hace falta.
 | Equipo | Cada uno a su manera | Todos comparten la config |
 | Cambiar de maquina | Pierdes tus "prompts buenos" | `git clone` y listo |
 | Prompt tipico | 3 parrafos | 1 frase |
+
+---
+
+### Paso 7.2: Crea tu propia customization (opcional)
+
+Hasta ahora usaste archivos pre-construidos. Ahora crea uno desde cero:
+
+**Opcion A — Instruction:** Usa `/create-instruction` para crear una instruction nueva. Por ejemplo, una que aplique solo a archivos SCSS con reglas de estilo.
+
+**Opcion B — Skill:** Usa `/create-skill` para crear un skill. Por ejemplo, uno que ejecute `dotnet test` y explique los fallos.
+
+**Opcion C — Agent:** Usa `/create-agent` para crear un agente. Por ejemplo, uno que escriba documentacion en espanol.
+
+> **Por que importa:** Configurar archivos que ya existen es util, pero la habilidad real es saber **crear nuevas customizations** para tu proyecto. Este paso te lleva de consumidor a creador.
 
 > **Cierre:** No escribiste mejores prompts. **Dejaste de necesitarlos.** Ese es el cambio de mentalidad.
 
@@ -668,9 +709,9 @@ TaskFlow/
 ├── .github/
 │   ├── copilot-instructions.md              # Ej. 1 — siempre activo
 │   ├── instructions/                        # Ej. 2 — por glob (applyTo)
-│   │   ├── csharp.instructions.md           #   → **/*.cs
-│   │   ├── tests.instructions.md            #   → **/*Tests*.cs
-│   │   ├── angular.instructions.md          #   → TaskFlow.Web/**/*.ts
+│   │   ├── csharp.instructions.md           #   → TaskFlow.Api/**/*.cs
+│   │   ├── tests.instructions.md            #   → **/*Tests*.cs, **/*Test.cs
+│   │   ├── angular.instructions.md          #   → TaskFlow.Web/**/*.{ts,html,scss}
 │   │   └── angular-tests.instructions.md    #   → TaskFlow.Web/**/*.spec.ts
 │   ├── prompts/                             # Ej. 3 — /comando
 │   │   ├── nuevo-recurso.prompt.md          #   /nuevo-recurso {Entidad}
@@ -694,15 +735,15 @@ TaskFlow/
 | Metodo | Ruta | Descripcion |
 |--------|------|-------------|
 | GET | `/tasks` | Listar tareas |
-| GET | `/tasks/{id}` | Obtener tarea |
+| GET | `/tasks/{id:int}` | Obtener tarea |
 | POST | `/tasks` | Crear tarea |
-| PUT | `/tasks/{id}` | Actualizar tarea |
-| DELETE | `/tasks/{id}` | Eliminar tarea |
+| PUT | `/tasks/{id:int}` | Actualizar tarea |
+| DELETE | `/tasks/{id:int}` | Eliminar tarea |
 | GET | `/projects` | Listar proyectos |
-| GET | `/projects/{id}` | Obtener proyecto |
+| GET | `/projects/{id:int}` | Obtener proyecto |
 | POST | `/projects` | Crear proyecto |
-| PUT | `/projects/{id}` | Actualizar proyecto |
-| DELETE | `/projects/{id}` | Eliminar proyecto |
+| PUT | `/projects/{id:int}` | Actualizar proyecto |
+| DELETE | `/projects/{id:int}` | Eliminar proyecto |
 
 ---
 
@@ -718,8 +759,8 @@ TaskFlow/
 | Skill no carga | Verificar que el `name` en SKILL.md coincide con el nombre de la carpeta |
 | `applyTo` no aplica | Verificar el glob pattern. Abrir **References** en la respuesta del chat |
 | Angular muestra pagina en blanco | Verificar consola del browser (F12). Puede faltar un import |
-| Tests fallan con "connection refused" | El API debe estar corriendo en :5100 para integration tests |
-| `dotnet build` falla | Ejecutar `dotnet restore` primero |
+| Tests de integracion no arrancan | `WebApplicationFactory<Program>` levanta la API en memoria — **no** hace falta correr el API en :5100. Verifica que `Program.cs` tenga `public partial class Program;` |
+| `dotnet build` falla | Ejecutar `dotnet restore TaskFlow.Api` primero |
 
 ---
 

@@ -1,8 +1,10 @@
 ---
-applyTo: "**/*.cs"
+applyTo: "TaskFlow.Api/**/*.cs"
 ---
 
-# Convenciones C# para TaskFlow
+# Convenciones C# para TaskFlow (codigo de la API)
+
+> Este glob apunta solo a `TaskFlow.Api/`. Los tests tienen sus propias reglas en `tests.instructions.md`, asi que no se contaminan con reglas de endpoints (AsNoTracking, Results, etc.).
 
 - Usa `record` para DTOs (request y response).
 - Usa primary constructors cuando sea posible.

@@ -1,5 +1,4 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TaskService } from '../../services/task.service';
 import { TaskResponse } from '../../models/task.model';
@@ -7,7 +6,7 @@ import { TaskResponse } from '../../models/task.model';
 @Component({
   selector: 'app-task-list',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   template: `
     <div class="container">
       <h2>Tareas</h2>
