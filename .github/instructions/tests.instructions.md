@@ -7,10 +7,8 @@ applyTo: "**/*Tests*.cs,**/*Test.cs"
 - Framework: **xUnit** con **FluentAssertions**.
 - Patron **Arrange-Act-Assert** con comentarios `// Arrange`, `// Act`, `// Assert`.
 - Usa `WebApplicationFactory<Program>` para tests de integracion.
-- Inyecta la factory con `IClassFixture<WebApplicationFactory<Program>>`.
 - Para que funcione, `Program.cs` debe tener `public partial class Program;` al final.
+- **Aislamiento con InMemory:** la base InMemory NO se reinicia sola entre tests. Para que los tests no dependan del orden, crea la factory por test (constructor + `IDisposable`) y asigna un nombre de BD unico con `UseInMemoryDatabase($"TaskFlow-{Guid.NewGuid()}")` via `WithWebHostBuilder`. (`IClassFixture` comparte una sola BD entre todos los tests de la clase — solo sirve si no dependes de estado limpio.)
 - Nombres descriptivos: `MetodoUnderTest_Escenario_ResultadoEsperado`.
-- Cada test debe ser independiente y no depender de orden de ejecucion.
 - Usa `HttpClient` methods (`GetAsync`, `PostAsJsonAsync`, etc.) para probar endpoints.
 - Verifica status codes con `response.StatusCode.Should().Be(HttpStatusCode.X)`.
-- La base de datos InMemory se reinicia por factory — cada test clase arranca con datos limpios.

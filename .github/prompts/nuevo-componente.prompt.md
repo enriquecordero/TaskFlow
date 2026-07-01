@@ -1,24 +1,27 @@
 ---
-mode: agent
 description: Crea un componente Angular completo con servicio, modelo, ruta y test.
+argument-hint: recurso=<NombreDelRecurso>
+agent: agent
 ---
 
-# Nuevo componente Angular: {{recurso}}
+# Nuevo componente Angular: ${input:recurso:NombreDelRecurso}
 
-Crea una feature completa en el frontend Angular para el recurso **{{recurso}}** siguiendo la arquitectura del proyecto.
+Crea una feature completa en el frontend Angular para el recurso **${input:recurso}**.
+
+> En los pasos, `{Recurso}` es el nombre en **PascalCase** y `{recurso}` en **minusculas** (para carpetas, archivos y rutas). Mira `features/tasks/` como referencia.
 
 > **Prerequisito:** el recurso debe existir en el backend para poder espejar sus DTOs.
 
-1. **Modelo** en `TaskFlow.Web/src/app/models/{{recurso | lowercase}}.model.ts`:
-   - Interfaces `{{recurso}}Response`, `Create{{recurso}}Request`, `Update{{recurso}}Request`
+1. **Modelo** en `TaskFlow.Web/src/app/models/{recurso}.model.ts`:
+   - Interfaces `{Recurso}Response`, `Create{Recurso}Request`, `Update{Recurso}Request`
    - Deben espejar los DTOs del backend
 
-2. **Servicio** en `TaskFlow.Web/src/app/services/{{recurso | lowercase}}.service.ts`:
+2. **Servicio** en `TaskFlow.Web/src/app/services/{recurso}.service.ts`:
    - CRUD completo con `HttpClient`
    - `{ providedIn: 'root' }`
    - Usa `inject(HttpClient)` y `environment.apiUrl`
 
-3. **Componente** en `TaskFlow.Web/src/app/features/{{recurso | lowercase}}s/{{recurso | lowercase}}-list.component.ts`:
+3. **Componente** en `TaskFlow.Web/src/app/features/{recurso}s/{recurso}-list.component.ts`:
    - Standalone component con signals
    - Formulario de creacion
    - Lista con acciones (editar, eliminar)
@@ -30,7 +33,7 @@ Crea una feature completa en el frontend Angular para el recurso **{{recurso}}**
 5. **Navegacion** en `app.component.ts`:
    - Agregar link en la nav
 
-6. **Test** en `TaskFlow.Web/src/app/services/{{recurso | lowercase}}.service.spec.ts`:
+6. **Test** en `TaskFlow.Web/src/app/services/{recurso}.service.spec.ts`:
    - Test basico del servicio con `provideHttpClientTesting`
    - Verifica que las llamadas HTTP apuntan a las URLs correctas
 

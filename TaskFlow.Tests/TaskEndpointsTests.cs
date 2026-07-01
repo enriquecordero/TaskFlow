@@ -1,14 +1,42 @@
 using System.Net;
 using System.Net.Http.Json;
 using FluentAssertions;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using TaskFlow.Api.Data;
 using TaskFlow.Api.Features.Tasks;
 
 namespace TaskFlow.Tests;
 
-public class TaskEndpointsTests(WebApplicationFactory<Program> factory) : IClassFixture<WebApplicationFactory<Program>>
+public class TaskEndpointsTests : IDisposable
 {
-    private readonly HttpClient _client = factory.CreateClient();
+    private readonly WebApplicationFactory<Program> _factory;
+    private readonly HttpClient _client;
+
+    public TaskEndpointsTests()
+    {
+        // xUnit crea una instancia nueva de la clase por cada test, asi que cada
+        // test recibe una base InMemory con nombre unico: quedan aislados y no
+        // dependen del orden de ejecucion.
+        _factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureServices(services =>
+            {
+                var descriptor = services.SingleOrDefault(
+                    d => d.ServiceType == typeof(DbContextOptions<TaskFlowDbContext>));
+                if (descriptor is not null)
+                    services.Remove(descriptor);
+
+                services.AddDbContext<TaskFlowDbContext>(options =>
+                    options.UseInMemoryDatabase($"TaskFlow-{Guid.NewGuid()}"));
+            });
+        });
+        _client = _factory.CreateClient();
+    }
+
+    public void Dispose() => _factory.Dispose();
 
     [Fact]
     public async Task GetTasks_ReturnsEmptyList_WhenNoTasksExist()

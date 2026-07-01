@@ -24,13 +24,13 @@ Cuando se modifica una entidad en `Domain/`, se anade un nuevo `DbSet` al contex
 
 ## Script auxiliar
 
-Este skill incluye `crear-migracion.sh` que automatiza los 4 pasos anteriores en un solo comando:
+Este skill incluye `crear-migracion.sh` que automatiza los pasos de **build + add + update** en un solo comando. Ejecutalo desde la raiz del repo:
 
 ```bash
-./crear-migracion.sh AddDueDateToTask
+bash .github/skills/migracion-ef/crear-migracion.sh AddDueDateToTask
 ```
 
-El script compila, crea la migracion y la aplica. Acepta el nombre como argumento y falla rapido si algo sale mal (`set -e`).
+El script compila, crea la migracion y la aplica (`set -e`, falla rapido). **No** cubre el paso 3 (revisar la migracion generada): hazlo a mano antes de aplicar en un proyecto real.
 
 ## Nota sobre InMemory
 

@@ -136,9 +136,11 @@ Y asi fluye una peticion de extremo a extremo — fijate que la entidad de domin
 
 | Modo | Funcion | Cuando usarlo |
 |------|---------|--------------|
-| **Ask** | Solo responde, NO modifica archivos | Explorar, entender, planificar |
-| **Edit** | Cambios acotados en archivos que tu eliges | Refactoring puntual |
+| **Ask** | Solo responde, NO modifica archivos | Explorar, entender, preguntar |
+| **Plan** | Genera un plan de implementacion estructurado, no edita | Disenar antes de codificar |
 | **Agent** | PUEDE crear y modificar archivos, usa tools | Implementar features completas |
+
+> **Nota:** el antiguo modo **Edit** esta deprecado; usa **Agent** para ediciones multi-archivo. VS Code 1.106 (oct-2025) ademas renombro los "chat modes" a **custom agents**.
 
 En modo **Agent** es donde las customizations brillan: el agente lee tus instructions, carga skills y usa herramientas MCP por su cuenta.
 
@@ -147,16 +149,16 @@ En modo **Agent** es donde las customizations brillan: el agente lee tus instruc
 | Funcion | Que hace | Shortcut |
 |---------|----------|----------|
 | **Inline completions** | Autocompleta mientras escribes | `Tab` para aceptar |
-| **NES** (Next Edit Suggestions) | Propaga cambios a archivos relacionados | `Tab` → `Tab` |
+| **NES** (Next Edit Suggestions) | Predice la ubicacion y el contenido de tu siguiente edicion | `Tab` → `Tab` |
 
-> **Estos dos representan ~70% del valor diario** y son totalmente gratis.
+> **Estos dos representan ~70% del valor diario** y no consumen peticiones premium. (En el plan **Free** las completions estan topadas a ~2.000/mes; en planes de pago son ilimitadas.)
 
 ### Herramientas que consumen AI Credits
 
 | Funcion | Que hace | Shortcut |
 |---------|----------|----------|
-| **Inline chat** | Refactoring en contexto | `Cmd+I` |
-| **Chat panel** | Conversacion con contexto del proyecto | `Cmd+Shift+I` |
+| **Inline chat** | Refactoring en contexto | `Cmd+I` (⌘I) |
+| **Chat panel** | Conversacion con contexto del proyecto | `Ctrl+Cmd+I` (⌃⌘I) |
 | **Agent mode** | Crea/modifica archivos, usa tools | Chat → Agent |
 
 ### Comandos Especiales
@@ -168,9 +170,9 @@ En modo **Agent** es donde las customizations brillan: el agente lee tus instruc
 | `/create-prompt` | Genera un prompt file |
 | `/create-skill` | Genera un skill |
 | `/create-agent` | Genera un custom agent |
-| `/instructions`, `/skills` | Abren los menus de configuracion |
+| `/instructions`, `/skills`, `/agents` | Abren los menus de configuracion |
 
-### Las 6 Customizations de VS Code
+### Las Customizations principales de VS Code
 
 | Customization | Que te da | Archivo / ubicacion |
 |---------------|-----------|---------------------|
@@ -180,6 +182,8 @@ En modo **Agent** es donde las customizations brillan: el agente lee tus instruc
 | **Agent skills** | Capacidad repetible con scripts, cargada bajo demanda | `.github/skills/<nombre>/SKILL.md` |
 | **MCP servers** | Conectar Copilot a herramientas externas | `.vscode/mcp.json` |
 | **Hooks** | Ejecutar comandos en puntos del ciclo del agente | configuracion de hooks |
+
+> VS Code documenta ademas **Agent plugins** (empaquetado distribuible de estas customizations como extension) y **AGENTS.md** (instrucciones siempre activas, formato portable entre herramientas). Quedan fuera del alcance del taller.
 
 Regla practica de adopcion **incremental**:
 
@@ -228,7 +232,7 @@ code --install-extension Angular.ng-template
 
 ### Cuenta
 
-- Cuenta de GitHub con **Copilot activo** (plan gratuito sirve para el taller)
+- Cuenta de GitHub con **Copilot activo**. El plan **Free** incluye Agent mode, instructions y MCP —tecnicamente alcanza—, pero su cuota de chat/agente es **limitada y no ampliable** (no se pueden comprar peticiones extra). Para un taller de ~3.5 h en Agent mode, conviene **Copilot Pro** (o su prueba gratuita) o verificar la cuota restante antes de empezar.
 
 ### Clonar y Levantar
 
@@ -444,6 +448,8 @@ Crea un componente para mostrar el detalle de una tarea.
 
 El repo incluye [`.github/prompts/nuevo-recurso.prompt.md`](.github/prompts/nuevo-recurso.prompt.md). Es un prompt parametrizable que crea, para un recurso dado, su entidad, DTO, validador, endpoints CRUD, tests y registro en Program.cs.
 
+> **Sintaxis de parametros (oficial de VS Code):** el prompt usa `${input:recurso:NombreDelRecurso}` para pedir un valor, y `argument-hint` en el frontmatter para sugerir que escribir. Al invocarlo pasas el binding con `recurso=...`. No existe la sintaxis `{{variable}}` ni filtros tipo `| lowercase` — el casing se describe en prosa y lo aplica el agente.
+
 ---
 
 ### Paso 3.2: Prompt para componentes Angular
@@ -457,15 +463,15 @@ El repo incluye [`.github/prompts/nuevo-componente.prompt.md`](.github/prompts/n
 **Backend:**
 
 ```
-/nuevo-recurso Notification
+/nuevo-recurso recurso=Notification
 ```
 
-Un solo comando genera toda la feature de "Notification" en el backend.
+Un solo comando genera toda la feature de "Notification" en el backend. (Tambien puedes anadir contexto libre tras el comando, p. ej. `/nuevo-recurso recurso=Notification con campos title y read`.)
 
 **Frontend:**
 
 ```
-/nuevo-componente Notification
+/nuevo-componente recurso=Notification
 ```
 
 Un solo comando genera toda la feature en Angular.
@@ -638,12 +644,15 @@ El repo incluye [`.vscode/mcp.json`](.vscode/mcp.json) con dos servidores:
       "url": "https://api.githubcopilot.com/mcp/"
     },
     "filesystem": {
+      "type": "stdio",
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-filesystem", "${workspaceFolder}"]
     }
   }
 }
 ```
+
+> **`type`:** `http` para servers remotos, `stdio` para procesos locales. Es requerido; declararlo en ambos evita ambigüedad.
 
 ---
 
@@ -658,7 +667,7 @@ empezar por la feature de notificaciones.
 
 **Verificar:** Copilot consulta datos reales, no inventa.
 
-> **Seguridad:** revisa siempre que hace un servidor MCP antes de conectarlo y usa las aprobaciones de VS Code para los comandos de terminal.
+> **Seguridad:** revisa siempre que hace un servidor MCP antes de conectarlo. Las aprobaciones de VS Code cubren edicion de archivos, ejecucion de comandos y uso de herramientas (no solo la terminal). Ojo: el server `filesystem` corre `npx -y ...`, que **descarga y ejecuta** un paquete de npm en cada arranque (riesgo de cadena de suministro).
 
 ---
 
@@ -678,7 +687,7 @@ empezar por la feature de notificaciones.
 1. **El 70% del valor diario (inline + NES) es gratis** — usarlo primero
 2. **Las instrucciones son texto plano** — cero costo, maximo impacto
 3. **Activar `/caveman-mode`** cuando necesites muchas iteraciones rapidas
-4. **Los MCPs mantienen el contexto magro**: traen solo lo relevante, no todo
+4. **Habilita solo los MCP/tools que uses**: cada tool activa consume contexto (hay un tope practico de tools por chat), asi que no dejes servers encendidos "por si acaso"
 
 ---
 
@@ -792,21 +801,26 @@ TaskFlow/
 │   ├── copilot-instructions.md              # Ej. 1 — siempre activo
 │   ├── instructions/                        # Ej. 2 — por glob (applyTo)
 │   │   ├── csharp.instructions.md           #   → TaskFlow.Api/**/*.cs
-│   │   ├── tests.instructions.md            #   → **/*Tests*.cs, **/*Test.cs
-│   │   ├── angular.instructions.md          #   → TaskFlow.Web/**/*.{ts,html,scss}
+│   │   ├── tests.instructions.md            #   → **/*Tests*.cs,**/*Test.cs
+│   │   ├── angular.instructions.md          #   → TaskFlow.Web/**/*.ts,*.html,*.scss
 │   │   └── angular-tests.instructions.md    #   → TaskFlow.Web/**/*.spec.ts
 │   ├── prompts/                             # Ej. 3 — /comando
-│   │   ├── nuevo-recurso.prompt.md          #   /nuevo-recurso {Entidad}
-│   │   └── nuevo-componente.prompt.md       #   /nuevo-componente {Entidad}
+│   │   ├── nuevo-recurso.prompt.md          #   /nuevo-recurso recurso=Entidad
+│   │   └── nuevo-componente.prompt.md       #   /nuevo-componente recurso=Entidad
 │   ├── agents/                              # Ej. 4 — roles
 │   │   ├── revisor.agent.md                 #   Solo reporta, no edita
 │   │   ├── api-builder.agent.md             #   Minimal APIs .NET
 │   │   └── frontend-builder.agent.md        #   Angular 19
 │   └── skills/                              # Ej. 5 — bajo demanda
-│       ├── migracion-ef/SKILL.md            #   Migraciones EF Core
+│       ├── migracion-ef/                    #   Migraciones EF Core
+│       │   ├── SKILL.md
+│       │   └── crear-migracion.sh           #   script auxiliar del skill
 │       └── caveman-mode/SKILL.md            #   Ahorro de tokens
 ├── .vscode/
 │   └── mcp.json                             # Ej. 6 — MCP servers
+├── .claude/
+│   └── launch.json                          # config del dev server (preview)
+├── TaskFlow.slnx                            # solucion (.NET)
 ├── TaskFlow.Api/                            # .NET 10 Minimal API
 ├── TaskFlow.Web/                            # Angular 19
 └── TaskFlow.Tests/                          # xUnit + FluentAssertions
@@ -873,7 +887,7 @@ Si. Son archivos de texto — cero costo. Lo que consume AI Credits es la conver
 Itera. El feedback loop es: generar → verificar → corregir. Con las instrucciones bien configuradas, la primera generacion es mucho mas precisa.
 
 **¿Las instructions afectan al autocompletado inline?**
-No. Solo afectan al chat (Ask, Edit, Agent). El autocompletado inline usa contexto del archivo abierto.
+No. Aplican al chat (Ask, Plan, Agent), a Copilot code review y al coding agent — **no** al autocompletado inline ni a NES, que usan el contexto del archivo abierto.
 
 **¿Puedo tener muchos skills sin saturar el contexto?**
 Si. Copilot solo lee `name` + `description` de cada skill. Carga el cuerpo completo solo cuando la tarea coincide.
