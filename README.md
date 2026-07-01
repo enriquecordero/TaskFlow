@@ -43,6 +43,25 @@ Este workshop practico tiene un solo objetivo:
 
 Un SaaS de gestion de tareas con API REST + frontend Angular. Deliberadamente sencillo — el protagonista es la configuracion de Copilot, no la app.
 
+Asi se ve la pantalla que vas a construir (wireframe):
+
+```text
++-------------------------------------------------------+
+|  TaskFlow                        Tareas | Proyectos   |  <- nav (RouterLink)
++-------------------------------------------------------+
+|  Tareas                                               |
+|                                                       |
+|  [ Nueva tarea...   ]  [ Descripcion ]   ( Crear )    |  <- form con signals
+|                                                       |
+|  [ ] Disenar el API                          ( x )    |
+|  [x] Configurar copilot-instructions.md      ( x )    |  <- @for (task of
+|  [ ] Escribir tests de integracion           ( x )    |      tasks(); ...)
+|                                                       |
++-------------------------------------------------------+
+        |                                    |
+        v  RouterLink -> lazy loadComponent  v  ( x ) -> deleteTask(id)
+```
+
 ### Stack
 
 | Capa | Tecnologia |
@@ -75,6 +94,26 @@ TaskFlow/
     ├── prompts/
     ├── agents/
     └── skills/
+```
+
+Y asi fluye una peticion de extremo a extremo — fijate que la entidad de dominio **nunca** cruza la frontera HTTP, solo el DTO:
+
+```text
+  Angular 19 (browser)                    .NET 10 API (:5100)
+  --------------------                    -------------------
+  TaskListComponent                       MapTaskEndpoints()
+    signal tasks()                          |
+        |                                   v
+        v              GET /tasks         FluentValidation
+  TaskService          ------------>        |
+    inject(HttpClient)                      v
+    environment.apiUrl   <------------   TaskFlowDbContext
+        |               JSON (DTO)        (EF Core InMemory)
+        v               TaskResponse         |
+  models/*.model.ts                          v
+  (espejan los DTOs)                      TaskItem (Domain)
+
+  Regla clave: la entidad TaskItem NUNCA cruza el HTTP; solo viaja el DTO.
 ```
 
 ### Estandares del Proyecto (los que normalmente repetirias en cada prompt)
@@ -550,6 +589,24 @@ Pide algo que *encaje con la descripcion* del skill migracion-ef sin nombrarlo:
 Anadi un campo DueDate a la entidad TaskItem. Necesito reflejarlo en la base de datos.
 ```
 
+Asi decide Copilot que skill cargar — solo lee el frontmatter (barato) y expande el cuerpo del que coincide:
+
+```text
+1) Al abrir el chat: Copilot lee SOLO name + description (barato)
+   +--------------------------------------------------+
+   | migracion-ef  ->  "migraciones EF Core, modelo"  |
+   | caveman-mode  ->  "ahorro de tokens, ser breve"  |
+   +--------------------------------------------------+
+
+2) Pides: "anadi DueDate, reflejalo en la base de datos"
+                          |
+                          v   compara con cada description
+   +--------------------------------------------------+
+   | migracion-ef  MATCH  -> carga el cuerpo completo |
+   | caveman-mode   no    -> sigue dormido (0 costo)  |
+   +--------------------------------------------------+
+```
+
 **Verificar:** Copilot detecta que tu tarea coincide con la `description` del skill, **carga el procedimiento por su cuenta** y sigue los pasos.
 
 > **Si no se carga automaticamente:** la auto-carga depende de que la descripcion del skill coincida con tu peticion. Si no funciona, invocalo directamente con `/migracion-ef`. Ambas formas son validas.
@@ -649,6 +706,31 @@ notificaciones de un usuario. Que cambie el modelo de datos si hace falta.
 - (Si usas) `/nuevo-recurso` o `/nuevo-componente`
 - Los agents `api-builder` / `frontend-builder` si los seleccionas
 - MCP → si necesita datos del repo
+
+Visto como diagrama: una frase entra, Copilot ensambla el contexto de cada capa por su cuenta, y sale una feature completa:
+
+```text
+            "Crea la feature Notifications"   (1 frase)
+                            |
+                            v
+                +-----------------------+
+                |  Copilot (Agent mode) |
+                +-----------------------+
+                            |  ensambla el contexto de cada capa
+      +----------+---------+----------+-----------+----------+
+      v          v         v          v           v          v
+  copilot-   *.instr.    SKILL     /prompt    *.agent.md    MCP
+  instr.     por glob   on-match   /comando    si eliges   si data
+  (siempre)  C# / NG    migrac-ef  nuevo-*     builders    issues
+      +----------+---------+----------+-----------+----------+
+                            |
+                            v
+        +---------------------------------------------+
+        | Feature completa, sin repetir convenciones: |
+        | entidad + DTOs + validador + endpoints +    |
+        | tests + componente + servicio + ruta        |
+        +---------------------------------------------+
+```
 
 ### El antes y el despues
 
