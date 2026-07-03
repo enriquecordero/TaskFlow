@@ -1104,6 +1104,33 @@ con signals, consultando la doc.
 
 ---
 
+### Para tus proyectos reales: Azure DevOps MCP
+
+Los dos MCP de arriba son de **documentación** (agnósticos al repo). Si tu equipo trabaja en **Azure DevOps**, existe el [MCP oficial de Microsoft](https://github.com/microsoft/azure-devops-mcp) que conecta Copilot a **tus datos reales**: work items, repos, pull requests y pipelines.
+
+**El beneficio:** en vez de que Copilot invente, trabaja con *tu* backlog real. Ejemplos: *"resume mis work items activos y sugiere por cuál empezar"*, *"crea un work item para la feature de notificaciones"*, *"¿qué cambió en el último PR de esta rama?"*. Es llevar el chat a tu flujo de trabajo, no solo al código.
+
+Config (usa `inputs` para que cada quien ponga su propia organización):
+
+```json
+{
+  "inputs": [
+    { "id": "ado_org", "type": "promptString", "description": "Tu organizacion de Azure DevOps (ej. 'contoso')" }
+  ],
+  "servers": {
+    "azure-devops": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@azure-devops/mcp", "${input:ado_org}"]
+    }
+  }
+}
+```
+
+> **No lo incluimos en el taller a propósito:** requiere `az login` (Azure CLI) o autenticación Entra y una organización real — deja de ser "cero configuración". Pero en tu día a día es el que más valor te dará. (De paso, fíjate en el bloque `inputs`: es la forma oficial de que `mcp.json` te **pida** un valor, como la organización, en vez de hardcodearlo.)
+
+---
+
 ### Paso 6.3: Disciplina de costo
 
 | Accion | Consume peticiones premium? |
