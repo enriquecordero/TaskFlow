@@ -664,6 +664,13 @@ Sigue las convenciones de Angular del proyecto (signals, inject, standalone, @if
 
 Un solo comando genera toda la feature de "Notification" en el backend. (Tambien puedes anadir contexto libre tras el comando, p. ej. `/nuevo-recurso recurso=Notification con campos title y read`.)
 
+> **Si Copilot te pregunta las propiedades, es el guardarraíl del prompt funcionando** — no está fallando. El prompt dice *"si no se especifican las propiedades, pregunta antes de asumirlas"*, así que en vez de alucinar el modelo, te lo pide. Respóndele algo consistente con el proyecto:
+>
+> - **Propiedades:** `Title:string (requerido), Message:string (requerido), IsRead:bool (default false), CreatedAt:DateTime (lo asigna el servidor)`
+> - **Reglas:** `Title requerido y max 200. Message requerido. IsRead por defecto false. CreatedAt no viene en el request.`
+>
+> (Encajan con el patrón existente: `Title` como en `TaskValidators`, `IsRead` como `IsCompleted`, `CreatedAt` server-side.) **Un buen prompt pregunta en vez de asumir** — ese es el punto.
+
 **Frontend:**
 
 ```
