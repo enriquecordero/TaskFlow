@@ -183,7 +183,7 @@ En modo **Agent** es donde las customizations brillan: el agente lee tus instruc
 | **MCP servers** | Conectar Copilot a herramientas externas | `.vscode/mcp.json` |
 | **Hooks** | Ejecutar comandos en puntos del ciclo del agente | configuracion de hooks |
 
-> VS Code documenta ademas **Agent plugins** (empaquetado distribuible de estas customizations como extension) y **AGENTS.md** (instrucciones siempre activas, formato portable entre herramientas). Quedan fuera del alcance del taller.
+> **`AGENTS.md`** es el formato **portable** de instrucciones siempre activas (estandar abierto, entre herramientas); es lo que hoy suele generar `/init` y lo vemos en el Ejercicio 1 — equivale a `copilot-instructions.md`. VS Code documenta ademas **Agent plugins** (empaquetado distribuible de customizations como extension), que queda fuera del alcance del taller.
 
 Regla practica de adopcion **incremental**:
 
@@ -372,7 +372,18 @@ En el chat escribe:
 /init
 ```
 
-VS Code analiza el workspace y genera **`.github/copilot-instructions.md`**. Este archivo se aplica **automaticamente a todas las peticiones** del workspace — no hay que adjuntarlo ni mencionarlo.
+VS Code analiza el workspace y genera un archivo de **instrucciones siempre activas**, que se aplica **automaticamente a todas las peticiones** del chat — no hay que adjuntarlo ni mencionarlo.
+
+> **¿`AGENTS.md` o `copilot-instructions.md`?** Segun tu version de VS Code, `/init` puede generar uno u otro. Hacen **exactamente lo mismo** (instrucciones globales siempre activas); solo cambian el formato y la ubicacion:
+>
+> | | `AGENTS.md` | `.github/copilot-instructions.md` |
+> |---|---|---|
+> | Formato | Estandar abierto ([agents.md](https://agents.md)), **portable** entre herramientas (Copilot, Cursor, Zed…) | Especifico de Copilot / VS Code |
+> | Ubicacion | Raiz del repo (o anidado en subcarpetas) | `.github/` |
+> | Scoping | Por carpeta (un `AGENTS.md` por directorio) | Se combina con `*.instructions.md` + `applyTo` por glob (Ejercicio 2) |
+> | Genera hoy `/init` | Versiones recientes | Versiones/configuracion previas |
+>
+> Ambos son **siempre activos** y, si tienes los dos, VS Code los **combina**. Este taller usa `.github/copilot-instructions.md` como solucion de referencia porque se empareja de forma natural con las instructions por `applyTo` del Ejercicio 2 — pero si tu `/init` genero `AGENTS.md`, **estas igual de bien**: es el mismo concepto en formato portable. Lo que aprendas aqui aplica a ambos.
 
 ---
 
