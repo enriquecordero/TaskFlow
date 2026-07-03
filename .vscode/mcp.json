@@ -4,14 +4,15 @@
       "type": "http",
       "url": "https://api.githubcopilot.com/mcp/"
     },
-    "filesystem": {
+    "microsoft.docs.mcp": {
+      "type": "http",
+      "url": "https://learn.microsoft.com/api/mcp"
+    },
+    "angular-cli": {
       "type": "stdio",
       "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-filesystem",
-        "${workspaceFolder}"
-      ]
+      "args": ["-y", "@angular/cli", "mcp"],
+      "cwd": "${workspaceFolder}/TaskFlow.Web"
     }
   }
 }
