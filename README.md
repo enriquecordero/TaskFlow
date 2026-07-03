@@ -863,6 +863,8 @@ git restore TaskFlow.Api TaskFlow.Web TaskFlow.Tests && git clean -fd TaskFlow.A
 
 > Aquí tienes los dos skills completos. Créalos en `.github/skills/<nombre>/SKILL.md` (o genera un borrador con **`/create-skill`** y pégalo).
 
+> **Esto existe de verdad, a escala:** Angular publica [skills oficiales](https://angular.dev/ai/agent-skills) (`angular-developer`, `angular-new-app`) — misma idea que este ejercicio. Ojo al matiz: se instalan con `npx skills add https://github.com/angular/skills` (pensados para Gemini CLI / skills.sh), no como los `.github/skills/*/SKILL.md` de VS Code. Mismo concepto portable, distinto mecanismo de instalación.
+
 ---
 
 ### Paso 5.1: Skill de migraciones EF Core
@@ -1047,16 +1049,17 @@ git restore TaskFlow.Api TaskFlow.Web TaskFlow.Tests && git clean -fd TaskFlow.A
 
 > **Objetivo:** que Copilot trabaje con datos y servicios reales, no solo con el codigo.
 
-> A diferencia de los ejercicios anteriores, MCP no tiene un comando `/create-*`: creas `.vscode/mcp.json` a mano o con el comando **MCP: Add Server** de VS Code. [Solución en `main`](https://github.com/enriquecordero/TaskFlow/blob/main/.vscode/mcp.json).
+> A diferencia de los ejercicios anteriores, MCP no tiene un comando `/create-*`: creas `.vscode/mcp.json` a mano o con el comando **MCP: Add Server** de VS Code. Aquí tienes el archivo completo.
 
 ---
 
 ### Paso 6.1: Crear la configuracion
 
-Crea **`.vscode/mcp.json`** con dos servidores:
+Crea **`.vscode/mcp.json`** con tres servidores — cada uno cubre una necesidad real de *este* proyecto:
 
-- **github** (HTTP): consultar issues y PRs del repo
-- **filesystem** (stdio, via `npx`): acceso controlado a archivos del proyecto
+- **github** (HTTP): datos reales del repo (issues, PRs).
+- **microsoft.docs.mcp** (HTTP): doc oficial y al día de .NET / ASP.NET / EF Core — para el **backend**.
+- **angular-cli** (stdio): doc + tooling de Angular 19 (busca en la doc, best practices, corre build/test) — para el **frontend**.
 
 ```json
 {
@@ -1065,31 +1068,50 @@ Crea **`.vscode/mcp.json`** con dos servidores:
       "type": "http",
       "url": "https://api.githubcopilot.com/mcp/"
     },
-    "filesystem": {
+    "microsoft.docs.mcp": {
+      "type": "http",
+      "url": "https://learn.microsoft.com/api/mcp"
+    },
+    "angular-cli": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem", "${workspaceFolder}"]
+      "args": ["-y", "@angular/cli", "mcp"],
+      "cwd": "${workspaceFolder}/TaskFlow.Web"
     }
   }
 }
 ```
 
-> **`type`:** `http` para servers remotos, `stdio` para procesos locales. Es requerido; declararlo en ambos evita ambigüedad.
+> **El beneficio (por qué estos tres):** el modelo conoce versiones más viejas que las tuyas (.NET 10, Angular 19). Los MCP de doc le dan la **referencia real y actual** en vez de que la adivine — menos alucinaciones de API. Y el Angular MCP hace **más que doc**: lee `angular.json` y corre `build`/`test`/`lint`. Los tres son **oficiales y sin API key**.
+
+> **`type` y `cwd`:** `http` para servers remotos, `stdio` para procesos locales (el campo `type` es requerido). El `angular-cli` lleva `cwd: "${workspaceFolder}/TaskFlow.Web"` porque el `angular.json` vive en esa subcarpeta, no en la raíz — sin eso, sus tools de workspace (`list_projects`, `run_target`) no encontrarían el proyecto.
 
 ---
 
 ### Paso 6.2: Usarlo
 
-Con el servidor de GitHub conectado:
+Prueba los tres servidores:
 
+**Datos del repo (github):**
 ```
 Lista los issues abiertos de este repo y propon en cuales podriamos
 empezar por la feature de notificaciones.
 ```
 
-**Verificar:** Copilot consulta datos reales, no inventa.
+**Doc de backend (microsoft.docs.mcp):**
+```
+¿Como configuro un indice unico con Fluent API en EF Core 10? Usa la doc oficial.
+```
 
-> **Seguridad:** revisa siempre que hace un servidor MCP antes de conectarlo. Las aprobaciones de VS Code cubren edicion de archivos, ejecucion de comandos y uso de herramientas (no solo la terminal). Ojo: el server `filesystem` corre `npx -y ...`, que **descarga y ejecuta** un paquete de npm en cada arranque (riesgo de cadena de suministro).
+**Doc de frontend (angular-cli):**
+```
+Dame las best practices oficiales de Angular 19 para componentes standalone
+con signals, consultando la doc.
+```
+
+**Verificar:** Copilot consulta datos y documentación **reales y actuales**, no lo que "medio recuerda" del entrenamiento.
+
+> **Seguridad:** revisa siempre qué hace un servidor MCP antes de conectarlo. Las aprobaciones de VS Code cubren edición de archivos, ejecución de comandos y uso de herramientas (no solo la terminal). Ojo: `angular-cli` corre `npx -y @angular/cli`, que **descarga y ejecuta** un paquete de npm (riesgo de cadena de suministro); los servers HTTP (`github`, `microsoft.docs.mcp`) envían tus prompts a un servicio remoto.
 
 ---
 
