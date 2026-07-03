@@ -378,7 +378,7 @@ VS Code analiza el workspace y genera **`.github/copilot-instructions.md`**. Est
 
 ### Paso 1.2: Revisar y afinar
 
-`/init` da un buen punto de partida, pero tu mandas. Abrelo y ajustalo. El repo ya incluye un ejemplo completo en [`.github/copilot-instructions.md`](.github/copilot-instructions.md).
+`/init` da un buen punto de partida, pero tu mandas. Abrelo y ajustalo. El repo ya incluye un ejemplo completo en [`.github/copilot-instructions.md`](https://github.com/enriquecordero/TaskFlow/blob/main/.github/copilot-instructions.md).
 
 Buenas practicas al redactar instructions:
 
@@ -413,7 +413,7 @@ Compara con el resultado del Ejercicio 0. Ahora el resultado **ya respeta DTOs, 
 
 ### Paso 2.1: Instructions de C#
 
-El repo ya incluye [`.github/instructions/csharp.instructions.md`](.github/instructions/csharp.instructions.md) con `applyTo: "TaskFlow.Api/**/*.cs"`. Define convenciones de C#: records para DTOs, `AsNoTracking()`, `Results.Problem`, etc.
+El repo ya incluye [`.github/instructions/csharp.instructions.md`](https://github.com/enriquecordero/TaskFlow/blob/main/.github/instructions/csharp.instructions.md) con `applyTo: "TaskFlow.Api/**/*.cs"`. Define convenciones de C#: records para DTOs, `AsNoTracking()`, `Results.Problem`, etc.
 
 > **Por que no `**/*.cs`?** Si aplicara a todo el C#, las reglas de endpoints (`AsNoTracking`, `Results.Problem`) tambien cargarian al editar tests, donde no aplican. Scoping al proyecto de la API mantiene cada capa con sus reglas. Ese es el punto de `applyTo`.
 
@@ -421,19 +421,19 @@ El repo ya incluye [`.github/instructions/csharp.instructions.md`](.github/instr
 
 ### Paso 2.2: Instructions de tests
 
-El repo incluye [`.github/instructions/tests.instructions.md`](.github/instructions/tests.instructions.md) con `applyTo: "**/*Tests*.cs,**/*Test.cs"`. Define: Arrange-Act-Assert, xUnit, FluentAssertions, nombres descriptivos.
+El repo incluye [`.github/instructions/tests.instructions.md`](https://github.com/enriquecordero/TaskFlow/blob/main/.github/instructions/tests.instructions.md) con `applyTo: "**/*Tests*.cs,**/*Test.cs"`. Define: Arrange-Act-Assert, xUnit, FluentAssertions, nombres descriptivos.
 
 ---
 
 ### Paso 2.3: Instructions de Angular
 
-El repo incluye [`.github/instructions/angular.instructions.md`](.github/instructions/angular.instructions.md) con `applyTo: "TaskFlow.Web/**/*.ts,TaskFlow.Web/**/*.html,TaskFlow.Web/**/*.scss"`. Define: standalone components, signals, `inject()`, `@if`/`@for`.
+El repo incluye [`.github/instructions/angular.instructions.md`](https://github.com/enriquecordero/TaskFlow/blob/main/.github/instructions/angular.instructions.md) con `applyTo: "TaskFlow.Web/**/*.ts,TaskFlow.Web/**/*.html,TaskFlow.Web/**/*.scss"`. Define: standalone components, signals, `inject()`, `@if`/`@for`.
 
 ---
 
 ### Paso 2.4: Instructions de tests Angular
 
-El repo incluye [`.github/instructions/angular-tests.instructions.md`](.github/instructions/angular-tests.instructions.md) con `applyTo: "TaskFlow.Web/**/*.spec.ts"`. Define: Jasmine + Karma, `TestBed`, `provideHttpClientTesting`, `HttpTestingController`.
+El repo incluye [`.github/instructions/angular-tests.instructions.md`](https://github.com/enriquecordero/TaskFlow/blob/main/.github/instructions/angular-tests.instructions.md) con `applyTo: "TaskFlow.Web/**/*.spec.ts"`. Define: Jasmine + Karma, `TestBed`, `provideHttpClientTesting`, `HttpTestingController`.
 
 Fijate en el glob: solo aplica a archivos `.spec.ts` dentro de `TaskFlow.Web/`. Esto demuestra que puedes tener **multiples instructions para la misma tecnologia** con globs cada vez mas especificos.
 
@@ -471,7 +471,7 @@ Crea un componente para mostrar el detalle de una tarea.
 
 ### Paso 3.1: Prompt para recursos backend
 
-El repo incluye [`.github/prompts/nuevo-recurso.prompt.md`](.github/prompts/nuevo-recurso.prompt.md). Es un prompt parametrizable que crea, para un recurso dado, su entidad, DTO, validador, endpoints CRUD, tests y registro en Program.cs.
+El repo incluye [`.github/prompts/nuevo-recurso.prompt.md`](https://github.com/enriquecordero/TaskFlow/blob/main/.github/prompts/nuevo-recurso.prompt.md). Es un prompt parametrizable que crea, para un recurso dado, su entidad, DTO, validador, endpoints CRUD, tests y registro en Program.cs.
 
 > **Sintaxis de parametros (oficial de VS Code):** el prompt usa `${input:recurso:NombreDelRecurso}` para pedir un valor, y `argument-hint` en el frontmatter para sugerir que escribir. Al invocarlo pasas el binding con `recurso=...`. No existe la sintaxis `{{variable}}` ni filtros tipo `| lowercase` — el casing se describe en prosa y lo aplica el agente.
 
@@ -479,7 +479,7 @@ El repo incluye [`.github/prompts/nuevo-recurso.prompt.md`](.github/prompts/nuev
 
 ### Paso 3.2: Prompt para componentes Angular
 
-El repo incluye [`.github/prompts/nuevo-componente.prompt.md`](.github/prompts/nuevo-componente.prompt.md). Crea un componente Angular completo: modelo, servicio, componente standalone con signals, ruta con lazy loading, link de navegacion y un test del servicio (`.spec.ts`).
+El repo incluye [`.github/prompts/nuevo-componente.prompt.md`](https://github.com/enriquecordero/TaskFlow/blob/main/.github/prompts/nuevo-componente.prompt.md). Crea un componente Angular completo: modelo, servicio, componente standalone con signals, ruta con lazy loading, link de navegacion y un test del servicio (`.spec.ts`).
 
 ---
 
@@ -515,19 +515,19 @@ Un solo comando genera toda la feature en Angular.
 
 ### Paso 4.1: Agente revisor
 
-El repo incluye [`.github/agents/revisor.agent.md`](.github/agents/revisor.agent.md): un revisor de codigo que comprueba convenciones y **no edita, solo reporta** con severidades (error, warning, sugerencia).
+El repo incluye [`.github/agents/revisor.agent.md`](https://github.com/enriquecordero/TaskFlow/blob/main/.github/agents/revisor.agent.md): un revisor de codigo que comprueba convenciones y **no edita, solo reporta** con severidades (error, warning, sugerencia).
 
 ---
 
 ### Paso 4.2: Agente API Builder
 
-El repo incluye [`.github/agents/api-builder.agent.md`](.github/agents/api-builder.agent.md): especializado en Minimal APIs de .NET, con foco en endpoints, DTOs y validacion.
+El repo incluye [`.github/agents/api-builder.agent.md`](https://github.com/enriquecordero/TaskFlow/blob/main/.github/agents/api-builder.agent.md): especializado en Minimal APIs de .NET, con foco en endpoints, DTOs y validacion.
 
 ---
 
 ### Paso 4.3: Agente Frontend Builder
 
-El repo incluye [`.github/agents/frontend-builder.agent.md`](.github/agents/frontend-builder.agent.md): especialista en Angular 19, construye componentes standalone con signals conectados al backend.
+El repo incluye [`.github/agents/frontend-builder.agent.md`](https://github.com/enriquecordero/TaskFlow/blob/main/.github/agents/frontend-builder.agent.md): especialista en Angular 19, construye componentes standalone con signals conectados al backend.
 
 ---
 
@@ -565,7 +565,7 @@ Crea un endpoint para buscar tareas por titulo.
 
 ### Paso 5.1: Skill de migraciones EF Core
 
-El repo incluye [`.github/skills/migracion-ef/SKILL.md`](.github/skills/migracion-ef/SKILL.md). Ensena a Copilot el procedimiento para crear y aplicar migraciones.
+El repo incluye [`.github/skills/migracion-ef/SKILL.md`](https://github.com/enriquecordero/TaskFlow/blob/main/.github/skills/migracion-ef/SKILL.md). Ensena a Copilot el procedimiento para crear y aplicar migraciones.
 
 El skill incluye un **script auxiliar** (`crear-migracion.sh`) que automatiza todo el procedimiento en un solo comando: compila, crea la migracion y la aplica. Esto demuestra que los skills **pueden contener archivos adicionales** (scripts, templates, configs) junto al `SKILL.md`.
 
@@ -588,7 +588,7 @@ Copilot solo lee `name` + `description` de todos tus skills (barato). **Carga el
 
 ### Paso 5.2: Skill caveman-mode (ahorro de tokens)
 
-El repo incluye [`.github/skills/caveman-mode/SKILL.md`](.github/skills/caveman-mode/SKILL.md). Reduce el consumo de tokens 50-70% haciendo que las respuestas sean ultra-breves sin perder calidad tecnica.
+El repo incluye [`.github/skills/caveman-mode/SKILL.md`](https://github.com/enriquecordero/TaskFlow/blob/main/.github/skills/caveman-mode/SKILL.md). Reduce el consumo de tokens 50-70% haciendo que las respuestas sean ultra-breves sin perder calidad tecnica.
 
 **Por que es un skill y no un agent:** como skill se **apila** con cualquier agent. Puedes usar `api-builder` en modo caveman sin duplicar instrucciones. Un agent seria exclusivo — no podrias combinarlo.
 
@@ -656,7 +656,7 @@ Asi decide Copilot que skill cargar — solo lee el frontmatter (barato) y expan
 
 ### Paso 6.1: Revisar la configuracion
 
-El repo incluye [`.vscode/mcp.json`](.vscode/mcp.json) con dos servidores:
+El repo incluye [`.vscode/mcp.json`](https://github.com/enriquecordero/TaskFlow/blob/main/.vscode/mcp.json) con dos servidores:
 
 - **github** (HTTP): consultar issues y PRs del repo
 - **filesystem** (stdio, via `npx`): acceso controlado a archivos del proyecto
