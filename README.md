@@ -297,6 +297,15 @@ Espera a ver: `Local: http://localhost:4200/`
 
 > **Objetivo:** *sentir* el problema antes de resolverlo.
 
+> **Dos costumbres para todo el taller:**
+> - **Para que la audiencia siga los cambios:** termina cada prompt con *"...y al final resume qué archivos creaste o modificaste y por qué"*. Así Copilot entrega un resumen legible de lo que tocó, además del diff.
+> - **Ritual de reset entre ejercicios** (cada vez que veas *"Deshaz los cambios"*): como el repo está versionado, vuelve al estado limpio con git —
+>   ```bash
+>   git restore .        # revierte ediciones a archivos existentes
+>   git clean -fd        # borra archivos nuevos que Copilot creó
+>   ```
+>   Usa `git clean -nd` (dry-run) para ver qué borraría sin borrarlo. No toca `bin/`, `obj/` ni `node_modules/` (están en `.gitignore`). Alternativa reversible: `git stash -u`.
+
 ---
 
 ### Paso 0.1: Pedir un endpoint (modo Agent)
@@ -305,6 +314,7 @@ Abre Copilot Chat en **Agent Mode** y escribe, **sin ninguna configuracion todav
 
 ```
 Crea un endpoint GET /tasks que devuelva una lista de tareas.
+Al terminar, resume que archivos creaste o modificaste y por que.
 ```
 
 **Observa y anota** — casi seguro:
@@ -323,6 +333,7 @@ Crea un endpoint GET /tasks. Usa Minimal API, .NET 10, devuelve un DTO
 (no la entidad), inyecta el DbContext, maneja errores con Results.Problem,
 nombres en PascalCase para tipos y camelCase para variables, y anade un
 test xUnit con FluentAssertions.
+Al terminar, resume que archivos cambiaste y que convenciones aplicaste.
 ```
 
 Mejor resultado, pero **acabas de escribir el prompt que tendras que repetir en cada endpoint**.
@@ -704,6 +715,7 @@ Empieza una conversacion **nueva y limpia** y pide:
 ```
 Quiero una nueva feature "Notifications": un recurso para crear y listar
 notificaciones de un usuario. Que cambie el modelo de datos si hace falta.
+Al terminar, resume que archivos generaste y que convencion aplico cada capa.
 ```
 
 **Observa, sin que tu lo digas, como entran en juego todas las capas:**
@@ -857,6 +869,7 @@ TaskFlow/
 | Angular muestra pagina en blanco | Verificar consola del browser (F12). Puede faltar un import |
 | Tests de integracion no arrancan | `WebApplicationFactory<Program>` levanta la API en memoria — **no** hace falta correr el API en :5100. Verifica que `Program.cs` tenga `public partial class Program;` |
 | `dotnet build` falla | Ejecutar `dotnet restore TaskFlow.Api` primero |
+| Quiero deshacer lo que generó Copilot | `git restore . && git clean -fd` (o `git stash -u` para poder recuperarlo). `git clean -nd` muestra qué borraría sin borrarlo. `Cmd+Z` no basta si creó archivos nuevos |
 
 ---
 
