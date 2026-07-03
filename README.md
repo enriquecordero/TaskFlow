@@ -243,7 +243,7 @@ Este repo tiene dos ramas a propósito:
 | **`inicio`** | La app + este README, **sin** `.github/` ni `.vscode/mcp.json` | **Empieza aquí.** Construyes toda la configuración de Copilot tú mismo, ejercicio por ejercicio. |
 | **`main`** | Todo lo anterior **+ la configuración completa** (`.github/`, MCP) | La **solución de referencia**. Compárala cuando termines cada ejercicio. |
 
-> **Importante:** el Ejercicio 0 solo funciona desde `inicio`. Si empiezas en `main`, Copilot ya tiene `copilot-instructions.md` y generará buen código desde el principio — nunca sentirás el "antes". Cuando un paso dice *"el repo ya incluye [archivo]"*, se refiere a la solución en `main`: genera tu versión y compárala.
+> **Importante:** el Ejercicio 0 solo funciona desde `inicio`. Si empiezas en `main`, Copilot ya tiene la configuración y generará buen código desde el principio — nunca sentirás el "antes". A partir del Ejercicio 1 **construyes** cada archivo de configuración tú mismo; los enlaces de *"referencia"* / *"solución en main"* apuntan a la rama `main` para que compares.
 
 ### Clonar y Levantar
 
@@ -424,37 +424,41 @@ Compara con el resultado del Ejercicio 0. Ahora el resultado **ya respeta DTOs, 
 
 > **Objetivo:** reglas que solo apliquen a ciertos archivos (tests, Angular, C#), sin contaminar todo el contexto.
 
+> **Vas a crear cuatro archivos de instructions**, cada uno acotado con `applyTo`. Genéralos con **`/create-instruction`** (VS Code te pregunta el patrón y las reglas) o escríbelos a mano en `.github/instructions/`. Cuando los tengas, los pruebas en el Paso 2.5. La [solución completa está en `main`](https://github.com/enriquecordero/TaskFlow/tree/main/.github/instructions) para comparar.
+
 ---
 
-### Paso 2.1: Instructions de C#
+### Paso 2.1: Crea las instructions de C#
 
-El repo ya incluye [`.github/instructions/csharp.instructions.md`](https://github.com/enriquecordero/TaskFlow/blob/main/.github/instructions/csharp.instructions.md) con `applyTo: "TaskFlow.Api/**/*.cs"`. Define convenciones de C#: records para DTOs, `AsNoTracking()`, `Results.Problem`, etc.
+Crea **`.github/instructions/csharp.instructions.md`** con `applyTo: "TaskFlow.Api/**/*.cs"` en el frontmatter, y define las convenciones de C#: `record` para DTOs, `AsNoTracking()` en lecturas, validar con FluentValidation, errores con `Results.Problem`. Al terminar, compáralo con la [solución en main](https://github.com/enriquecordero/TaskFlow/blob/main/.github/instructions/csharp.instructions.md).
 
 > **Por que no `**/*.cs`?** Si aplicara a todo el C#, las reglas de endpoints (`AsNoTracking`, `Results.Problem`) tambien cargarian al editar tests, donde no aplican. Scoping al proyecto de la API mantiene cada capa con sus reglas. Ese es el punto de `applyTo`.
 
 ---
 
-### Paso 2.2: Instructions de tests
+### Paso 2.2: Crea las instructions de tests
 
-El repo incluye [`.github/instructions/tests.instructions.md`](https://github.com/enriquecordero/TaskFlow/blob/main/.github/instructions/tests.instructions.md) con `applyTo: "**/*Tests*.cs,**/*Test.cs"`. Define: Arrange-Act-Assert, xUnit, FluentAssertions, nombres descriptivos.
-
----
-
-### Paso 2.3: Instructions de Angular
-
-El repo incluye [`.github/instructions/angular.instructions.md`](https://github.com/enriquecordero/TaskFlow/blob/main/.github/instructions/angular.instructions.md) con `applyTo: "TaskFlow.Web/**/*.ts,TaskFlow.Web/**/*.html,TaskFlow.Web/**/*.scss"`. Define: standalone components, signals, `inject()`, `@if`/`@for`.
+Crea **`.github/instructions/tests.instructions.md`** con `applyTo: "**/*Tests*.cs,**/*Test.cs"`. Define: xUnit + FluentAssertions, patron Arrange-Act-Assert, nombres descriptivos y el aislamiento de la BD InMemory por test. Compara con la [solución en main](https://github.com/enriquecordero/TaskFlow/blob/main/.github/instructions/tests.instructions.md).
 
 ---
 
-### Paso 2.4: Instructions de tests Angular
+### Paso 2.3: Crea las instructions de Angular
 
-El repo incluye [`.github/instructions/angular-tests.instructions.md`](https://github.com/enriquecordero/TaskFlow/blob/main/.github/instructions/angular-tests.instructions.md) con `applyTo: "TaskFlow.Web/**/*.spec.ts"`. Define: Jasmine + Karma, `TestBed`, `provideHttpClientTesting`, `HttpTestingController`.
+Crea **`.github/instructions/angular.instructions.md`** con `applyTo: "TaskFlow.Web/**/*.ts,TaskFlow.Web/**/*.html,TaskFlow.Web/**/*.scss"`. Define: standalone components, signals, `inject()`, `@if`/`@for`, sin `CommonModule`. Compara con la [solución en main](https://github.com/enriquecordero/TaskFlow/blob/main/.github/instructions/angular.instructions.md).
+
+---
+
+### Paso 2.4: Crea las instructions de tests Angular
+
+Crea **`.github/instructions/angular-tests.instructions.md`** con `applyTo: "TaskFlow.Web/**/*.spec.ts"`. Define: Jasmine + Karma, `TestBed`, `provideHttpClientTesting`, `HttpTestingController`. Compara con la [solución en main](https://github.com/enriquecordero/TaskFlow/blob/main/.github/instructions/angular-tests.instructions.md).
 
 Fijate en el glob: solo aplica a archivos `.spec.ts` dentro de `TaskFlow.Web/`. Esto demuestra que puedes tener **multiples instructions para la misma tecnologia** con globs cada vez mas especificos.
 
 ---
 
-### Paso 2.5: Comprobarlo
+### Paso 2.5: Pruébalos
+
+Ahora que tus instructions existen, comprueba que Copilot las aplica **solo por tocar un archivo que matchea el glob** — sin que se lo recuerdes.
 
 **Prueba backend — pide un test sin explicar tu estilo:**
 
@@ -482,11 +486,13 @@ Crea un componente para mostrar el detalle de una tarea.
 
 > **Objetivo:** convertir un prompt largo y repetido en **un comando**.
 
+> Crea los dos prompt files con **`/create-prompt`** (o a mano en `.github/prompts/`). [Solución completa en `main`](https://github.com/enriquecordero/TaskFlow/tree/main/.github/prompts).
+
 ---
 
 ### Paso 3.1: Prompt para recursos backend
 
-El repo incluye [`.github/prompts/nuevo-recurso.prompt.md`](https://github.com/enriquecordero/TaskFlow/blob/main/.github/prompts/nuevo-recurso.prompt.md). Es un prompt parametrizable que crea, para un recurso dado, su entidad, DTO, validador, endpoints CRUD, tests y registro en Program.cs.
+Crea **`.github/prompts/nuevo-recurso.prompt.md`** ([referencia](https://github.com/enriquecordero/TaskFlow/blob/main/.github/prompts/nuevo-recurso.prompt.md)): un prompt parametrizable que crea, para un recurso dado, su entidad, DTO, validador, endpoints CRUD, tests y registro en `Program.cs`.
 
 > **Sintaxis de parametros (oficial de VS Code):** el prompt usa `${input:recurso:NombreDelRecurso}` para pedir un valor, y `argument-hint` en el frontmatter para sugerir que escribir. Al invocarlo pasas el binding con `recurso=...`. No existe la sintaxis `{{variable}}` ni filtros tipo `| lowercase` — el casing se describe en prosa y lo aplica el agente.
 
@@ -494,7 +500,7 @@ El repo incluye [`.github/prompts/nuevo-recurso.prompt.md`](https://github.com/e
 
 ### Paso 3.2: Prompt para componentes Angular
 
-El repo incluye [`.github/prompts/nuevo-componente.prompt.md`](https://github.com/enriquecordero/TaskFlow/blob/main/.github/prompts/nuevo-componente.prompt.md). Crea un componente Angular completo: modelo, servicio, componente standalone con signals, ruta con lazy loading, link de navegacion y un test del servicio (`.spec.ts`).
+Crea **`.github/prompts/nuevo-componente.prompt.md`** ([referencia](https://github.com/enriquecordero/TaskFlow/blob/main/.github/prompts/nuevo-componente.prompt.md)): genera un componente Angular completo — modelo, servicio, componente standalone con signals, ruta con lazy loading, link de navegacion y un test del servicio (`.spec.ts`).
 
 ---
 
@@ -526,23 +532,25 @@ Un solo comando genera toda la feature en Angular.
 
 > **Objetivo:** crear "personas" especializadas con sus propias instrucciones.
 
+> Crea los tres agentes con **`/create-agent`** (o a mano en `.github/agents/`). [Solución completa en `main`](https://github.com/enriquecordero/TaskFlow/tree/main/.github/agents).
+
 ---
 
 ### Paso 4.1: Agente revisor
 
-El repo incluye [`.github/agents/revisor.agent.md`](https://github.com/enriquecordero/TaskFlow/blob/main/.github/agents/revisor.agent.md): un revisor de codigo que comprueba convenciones y **no edita, solo reporta** con severidades (error, warning, sugerencia).
+Crea **`.github/agents/revisor.agent.md`** ([referencia](https://github.com/enriquecordero/TaskFlow/blob/main/.github/agents/revisor.agent.md)): un revisor de codigo que comprueba convenciones y **no edita, solo reporta** con severidades (error, warning, sugerencia). Fijate en el frontmatter `tools:` con solo herramientas de lectura — eso es lo que le impide editar.
 
 ---
 
 ### Paso 4.2: Agente API Builder
 
-El repo incluye [`.github/agents/api-builder.agent.md`](https://github.com/enriquecordero/TaskFlow/blob/main/.github/agents/api-builder.agent.md): especializado en Minimal APIs de .NET, con foco en endpoints, DTOs y validacion.
+Crea **`.github/agents/api-builder.agent.md`** ([referencia](https://github.com/enriquecordero/TaskFlow/blob/main/.github/agents/api-builder.agent.md)): especializado en Minimal APIs de .NET, con foco en endpoints, DTOs y validacion.
 
 ---
 
 ### Paso 4.3: Agente Frontend Builder
 
-El repo incluye [`.github/agents/frontend-builder.agent.md`](https://github.com/enriquecordero/TaskFlow/blob/main/.github/agents/frontend-builder.agent.md): especialista en Angular 19, construye componentes standalone con signals conectados al backend.
+Crea **`.github/agents/frontend-builder.agent.md`** ([referencia](https://github.com/enriquecordero/TaskFlow/blob/main/.github/agents/frontend-builder.agent.md)): especialista en Angular 19, construye componentes standalone con signals conectados al backend.
 
 ---
 
@@ -576,13 +584,15 @@ Crea un endpoint para buscar tareas por titulo.
 
 > **Objetivo:** capacidades que Copilot **carga solo cuando hace falta** — no saturan el contexto.
 
+> Crea los dos skills con **`/create-skill`** (o a mano en `.github/skills/<nombre>/SKILL.md`). [Solución completa en `main`](https://github.com/enriquecordero/TaskFlow/tree/main/.github/skills).
+
 ---
 
 ### Paso 5.1: Skill de migraciones EF Core
 
-El repo incluye [`.github/skills/migracion-ef/SKILL.md`](https://github.com/enriquecordero/TaskFlow/blob/main/.github/skills/migracion-ef/SKILL.md). Ensena a Copilot el procedimiento para crear y aplicar migraciones.
+Crea **`.github/skills/migracion-ef/SKILL.md`** ([referencia](https://github.com/enriquecordero/TaskFlow/blob/main/.github/skills/migracion-ef/SKILL.md)): ensena a Copilot el procedimiento para crear y aplicar migraciones.
 
-El skill incluye un **script auxiliar** (`crear-migracion.sh`) que encadena build + add + update en un solo comando (la revision de la migracion la haces tu). Esto demuestra que los skills **pueden contener archivos adicionales** (scripts, templates, configs) junto al `SKILL.md`.
+Añádele tambien un **script auxiliar** (`crear-migracion.sh`) que encadene build + add + update en un solo comando (la revision de la migracion la haces tu). Asi ves que los skills **pueden contener archivos adicionales** (scripts, templates, configs) junto al `SKILL.md`.
 
 > **Nota:** Este proyecto usa `InMemoryDatabase`. Las migraciones se crean pero no tienen efecto real — es un ejercicio pedagogico. Con un proveedor real (SQL Server, PostgreSQL) los pasos son identicos.
 
@@ -603,7 +613,7 @@ Copilot solo lee `name` + `description` de todos tus skills (barato). **Carga el
 
 ### Paso 5.2: Skill caveman-mode (ahorro de tokens)
 
-El repo incluye [`.github/skills/caveman-mode/SKILL.md`](https://github.com/enriquecordero/TaskFlow/blob/main/.github/skills/caveman-mode/SKILL.md). Reduce el consumo de tokens 50-70% haciendo que las respuestas sean ultra-breves sin perder calidad tecnica.
+Crea **`.github/skills/caveman-mode/SKILL.md`** ([referencia](https://github.com/enriquecordero/TaskFlow/blob/main/.github/skills/caveman-mode/SKILL.md)): reduce el consumo de tokens 50-70% haciendo que las respuestas sean ultra-breves sin perder calidad tecnica.
 
 **Por que es un skill y no un agent:** como skill se **apila** con cualquier agent. Puedes usar `api-builder` en modo caveman sin duplicar instrucciones. Un agent seria exclusivo — no podrias combinarlo.
 
@@ -667,11 +677,13 @@ Asi decide Copilot que skill cargar — solo lee el frontmatter (barato) y expan
 
 > **Objetivo:** que Copilot trabaje con datos y servicios reales, no solo con el codigo.
 
+> A diferencia de los ejercicios anteriores, MCP no tiene un comando `/create-*`: creas `.vscode/mcp.json` a mano o con el comando **MCP: Add Server** de VS Code. [Solución en `main`](https://github.com/enriquecordero/TaskFlow/blob/main/.vscode/mcp.json).
+
 ---
 
-### Paso 6.1: Revisar la configuracion
+### Paso 6.1: Crear la configuracion
 
-El repo incluye [`.vscode/mcp.json`](https://github.com/enriquecordero/TaskFlow/blob/main/.vscode/mcp.json) con dos servidores:
+Crea **`.vscode/mcp.json`** ([referencia](https://github.com/enriquecordero/TaskFlow/blob/main/.vscode/mcp.json)) con dos servidores:
 
 - **github** (HTTP): consultar issues y PRs del repo
 - **filesystem** (stdio, via `npx`): acceso controlado a archivos del proyecto
