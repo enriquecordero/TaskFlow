@@ -356,7 +356,11 @@ Mejor resultado, pero **acabas de escribir el prompt que tendras que repetir en 
 
 > **Reflexion:** ¿Cuantas palabras de ese prompt son sobre el *que* (el endpoint) y cuantas sobre el *como* (convenciones)? Todo el "como" es candidato a moverse a configuracion.
 
-**Deshaz los cambios** antes de continuar.
+**Deshaz los cambios** antes de continuar (borra solo el código de demo — tu configuración se queda):
+
+```bash
+git restore TaskFlow.Api TaskFlow.Web TaskFlow.Tests && git clean -fd TaskFlow.Api TaskFlow.Web TaskFlow.Tests
+```
 
 ---
 
@@ -416,7 +420,11 @@ Compara con el resultado del Ejercicio 0. Ahora el resultado **ya respeta DTOs, 
 
 > **Momento wow:** En la respuesta del chat, abre la seccion **References** para confirmar que tu archivo de instrucciones (`AGENTS.md` o `copilot-instructions.md`) se uso.
 
-**Deshaz los cambios** antes de continuar.
+**Deshaz los cambios** antes de continuar (borra solo el código de demo — tu configuración se queda):
+
+```bash
+git restore TaskFlow.Api TaskFlow.Web TaskFlow.Tests && git clean -fd TaskFlow.Api TaskFlow.Web TaskFlow.Tests
+```
 
 ---
 
@@ -537,7 +545,11 @@ Crea un componente para mostrar el detalle de una tarea.
 
 > **Punto clave:** Copilot aplica las reglas **solo porque esta tocando un archivo que matchea el glob**. Las reglas globales siguen activas; las especificas se suman cuando corresponde.
 
-**Deshaz los cambios** antes de continuar.
+**Deshaz los cambios** antes de continuar (borra solo el código de demo — tu configuración se queda):
+
+```bash
+git restore TaskFlow.Api TaskFlow.Web TaskFlow.Tests && git clean -fd TaskFlow.Api TaskFlow.Web TaskFlow.Tests
+```
 
 ---
 
@@ -662,7 +674,11 @@ Un solo comando genera toda la feature en Angular.
 
 > **Diferencia con skills:** un **prompt file** lo invocas tu (`/comando`). Un **skill** lo puede cargar Copilot **solo** cuando detecta que aplica.
 
-**Deshaz los cambios** antes de continuar.
+**Deshaz los cambios** antes de continuar (borra solo el código de demo — tu configuración se queda):
+
+```bash
+git restore TaskFlow.Api TaskFlow.Web TaskFlow.Tests && git clean -fd TaskFlow.Api TaskFlow.Web TaskFlow.Tests
+```
 
 ---
 
@@ -826,7 +842,11 @@ Crea un endpoint para buscar tareas por titulo.
 
 > **Agents vs Prompt Files:** ambos pueden generar codigo, pero cumplen roles distintos. Usa un **prompt file** (`/nuevo-recurso`) cuando quieras un resultado one-shot y predecible — siempre los mismos pasos. Usa un **agent** (`api-builder`) cuando quieras una conversacion iterativa donde el agente toma decisiones segun el contexto.
 
-**Deshaz los cambios** antes de continuar.
+**Deshaz los cambios** antes de continuar (borra solo el código de demo — tu configuración se queda):
+
+```bash
+git restore TaskFlow.Api TaskFlow.Web TaskFlow.Tests && git clean -fd TaskFlow.Api TaskFlow.Web TaskFlow.Tests
+```
 
 ---
 
@@ -1008,7 +1028,11 @@ Asi decide Copilot que skill cargar — solo lee el frontmatter (barato) y expan
 
 > **Instructions vs Skills:** las *instructions* son reglas siempre presentes (el *como* escribir). Los *skills* son procedimientos cargados bajo demanda (el *como hacer una tarea concreta*). Los skills pueden traer scripts y son portables entre herramientas.
 
-**Deshaz los cambios** antes de continuar.
+**Deshaz los cambios** antes de continuar (borra solo el código de demo — tu configuración se queda):
+
+```bash
+git restore TaskFlow.Api TaskFlow.Web TaskFlow.Tests && git clean -fd TaskFlow.Api TaskFlow.Web TaskFlow.Tests
+```
 
 ---
 
