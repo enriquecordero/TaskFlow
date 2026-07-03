@@ -7,7 +7,7 @@
 - [Pre-requisitos](#pre-requisitos)
 - [Agenda del Workshop](#agenda-del-workshop)
 - [Ejercicio 0: Punto de Partida (sin configurar)](#ejercicio-0-punto-de-partida-sin-configurar)
-- [Ejercicio 1: /init y copilot-instructions.md](#ejercicio-1-init-y-copilot-instructionsmd)
+- [Ejercicio 1: /init e instrucciones de proyecto](#ejercicio-1-init-e-instrucciones-de-proyecto)
 - [Ejercicio 2: Instructions Especificas con applyTo](#ejercicio-2-instructions-especificas-con-applyto)
 - [Ejercicio 3: Prompt Files (slash commands reutilizables)](#ejercicio-3-prompt-files-slash-commands-reutilizables)
 - [Ejercicio 4: Custom Agents (roles)](#ejercicio-4-custom-agents-roles)
@@ -144,7 +144,7 @@ Y asi fluye una peticion de extremo a extremo — fijate que la entidad de domin
 
 En modo **Agent** es donde las customizations brillan: el agente lee tus instructions, carga skills y usa herramientas MCP por su cuenta.
 
-### El Piso Gratis (no consume AI Credits)
+### El Piso Gratis (no consume peticiones premium)
 
 | Funcion | Que hace | Shortcut |
 |---------|----------|----------|
@@ -153,7 +153,7 @@ En modo **Agent** es donde las customizations brillan: el agente lee tus instruc
 
 > **Estos dos representan ~70% del valor diario** y no consumen peticiones premium. (En el plan **Free** las completions estan topadas a ~2.000/mes; en planes de pago son ilimitadas.)
 
-### Herramientas que consumen AI Credits
+### Herramientas que consumen peticiones premium
 
 | Funcion | Que hace | Shortcut |
 |---------|----------|----------|
@@ -165,7 +165,7 @@ En modo **Agent** es donde las customizations brillan: el agente lee tus instruc
 
 | Comando | Descripcion |
 |---------|-------------|
-| `/init` | Genera `copilot-instructions.md` inicial |
+| `/init` | Genera el archivo de instrucciones inicial (`AGENTS.md` o `copilot-instructions.md`) |
 | `/create-instruction` | Genera un `*.instructions.md` puntual |
 | `/create-prompt` | Genera un prompt file |
 | `/create-skill` | Genera un skill |
@@ -292,7 +292,7 @@ Espera a ver: `Local: http://localhost:4200/`
 | Bloque | Tema | Tiempo |
 |--------|------|--------|
 | Ej. 0 | Punto de partida: el dolor de repetir prompts | 15 min |
-| Ej. 1 | `/init` + `copilot-instructions.md` | 30 min |
+| Ej. 1 | `/init` + instrucciones de proyecto | 30 min |
 | Ej. 2 | Instructions especificas con `applyTo` | 25 min |
 | Descanso | | 10 min |
 | Ej. 3 | Prompt files (`/comando`) | 25 min |
@@ -313,12 +313,14 @@ Espera a ver: `Local: http://localhost:4200/`
 
 > **Dos costumbres para todo el taller:**
 > - **Para que la audiencia siga los cambios:** termina cada prompt con *"...y al final resume qué archivos creaste o modificaste y por qué"*. Así Copilot entrega un resumen legible de lo que tocó, además del diff.
-> - **Ritual de reset entre ejercicios** (cada vez que veas *"Deshaz los cambios"*): como el repo está versionado, vuelve al estado limpio con git —
+> - **Ritual de reset entre ejercicios** (cada vez que veas *"Deshaz los cambios"*): deshaz solo el **código de demo** que Copilot generó (endpoints, componentes, tests) — **no** tu configuración. Como el repo está versionado:
 >   ```bash
->   git restore .        # revierte ediciones a archivos existentes
->   git clean -fd        # borra archivos nuevos que Copilot creó
+>   git restore TaskFlow.Api TaskFlow.Web TaskFlow.Tests
+>   git clean -fd TaskFlow.Api TaskFlow.Web TaskFlow.Tests
 >   ```
->   Usa `git clean -nd` (dry-run) para ver qué borraría sin borrarlo. No toca `bin/`, `obj/` ni `node_modules/` (están en `.gitignore`). Alternativa reversible: `git stash -u`.
+>   Limpia solo las carpetas de la app. Añade `-nd` en vez de `-fd` para un dry-run. No toca `bin/`, `obj/` ni `node_modules/` (gitignored).
+>
+> ⚠️ **Tu configuración es tu progreso.** Los archivos que construyes (`AGENTS.md` o `.github/…`, `.vscode/mcp.json`) **se acumulan ejercicio a ejercicio** — el efecto compuesto del Ejercicio 7 depende de ello. **No los borres**; por eso el reset de arriba limita `git clean` a las carpetas de la app.
 
 ---
 
@@ -358,7 +360,7 @@ Mejor resultado, pero **acabas de escribir el prompt que tendras que repetir en 
 
 ---
 
-## Ejercicio 1: /init y copilot-instructions.md
+## Ejercicio 1: /init e instrucciones de proyecto
 
 > **Objetivo:** generar las instrucciones de proyecto una sola vez y que apliquen a *todo* el chat automaticamente.
 
@@ -580,7 +582,7 @@ Crea un endpoint para buscar tareas por titulo.
 
 El repo incluye [`.github/skills/migracion-ef/SKILL.md`](https://github.com/enriquecordero/TaskFlow/blob/main/.github/skills/migracion-ef/SKILL.md). Ensena a Copilot el procedimiento para crear y aplicar migraciones.
 
-El skill incluye un **script auxiliar** (`crear-migracion.sh`) que automatiza todo el procedimiento en un solo comando: compila, crea la migracion y la aplica. Esto demuestra que los skills **pueden contener archivos adicionales** (scripts, templates, configs) junto al `SKILL.md`.
+El skill incluye un **script auxiliar** (`crear-migracion.sh`) que encadena build + add + update en un solo comando (la revision de la migracion la haces tu). Esto demuestra que los skills **pueden contener archivos adicionales** (scripts, templates, configs) junto al `SKILL.md`.
 
 > **Nota:** Este proyecto usa `InMemoryDatabase`. Las migraciones se crean pero no tienen efecto real — es un ejercicio pedagogico. Con un proveedor real (SQL Server, PostgreSQL) los pasos son identicos.
 
@@ -711,7 +713,7 @@ empezar por la feature de notificaciones.
 
 ### Paso 6.3: Disciplina de costo
 
-| Accion | Consume AI Credits? |
+| Accion | Consume peticiones premium? |
 |--------|---------------------|
 | Inline completions | No |
 | NES (Next Edit Suggestions) | No |
@@ -747,7 +749,7 @@ Al terminar, resume que archivos generaste y que convencion aplico cada capa.
 
 **Observa, sin que tu lo digas, como entran en juego todas las capas:**
 
-- `copilot-instructions.md` → stack, DTOs, manejo de errores, nombres
+- `copilot-instructions.md` (o `AGENTS.md`) → stack, DTOs, manejo de errores, nombres
 - `csharp.instructions.md` / `angular.instructions.md` → estilo por capa
 - `tests.instructions.md` → patron de tests al tocar archivos `.Tests.cs`
 - El skill `migracion-ef` → se autocarga porque cambia el modelo de datos
@@ -826,7 +828,7 @@ Hasta ahora usaste archivos pre-construidos. Ahora crea uno desde cero:
 
 | Nivel | Archivo | Se activa | Proposito |
 |-------|---------|-----------|-----------|
-| 1 | `copilot-instructions.md` | Siempre | Reglas globales del proyecto |
+| 1 | `copilot-instructions.md` / `AGENTS.md` | Siempre | Reglas globales del proyecto |
 | 2 | `*.instructions.md` + `applyTo` | Al editar archivo que matchea | Convenciones por capa |
 | 3 | `*.prompt.md` | Al invocar `/nombre` | Comandos reutilizables |
 | 4 | `SKILL.md` | Al detectar intent o invocar `/nombre` | Workflows bajo demanda |
@@ -896,7 +898,7 @@ TaskFlow/
 | Angular muestra pagina en blanco | Verificar consola del browser (F12). Puede faltar un import |
 | Tests de integracion no arrancan | `WebApplicationFactory<Program>` levanta la API en memoria — **no** hace falta correr el API en :5100. Verifica que `Program.cs` tenga `public partial class Program;` |
 | `dotnet build` falla | Ejecutar `dotnet restore TaskFlow.Api` primero |
-| Quiero deshacer lo que generó Copilot | `git restore . && git clean -fd` (o `git stash -u` para poder recuperarlo). `git clean -nd` muestra qué borraría sin borrarlo. `Cmd+Z` no basta si creó archivos nuevos |
+| Quiero deshacer lo que generó Copilot | Solo el código de demo (conserva tu config): `git restore TaskFlow.Api TaskFlow.Web TaskFlow.Tests && git clean -fd TaskFlow.Api TaskFlow.Web TaskFlow.Tests`. `git clean -nd <ruta>` muestra qué borraría. Ojo: `git clean -fd` sin ruta también borra tu config no commiteada. `Cmd+Z` no basta si creó archivos nuevos |
 
 ---
 
@@ -921,7 +923,7 @@ TaskFlow/
 Si. Todo el harness (`.github/`) es portable. Copia la estructura, ajusta las instrucciones a tu dominio y stack.
 
 **¿Las customizations son gratis?**
-Si. Son archivos de texto — cero costo. Lo que consume AI Credits es la conversacion de Copilot que los lee.
+Si. Son archivos de texto — cero costo. Lo que consume peticiones premium es la conversacion de Copilot que los lee.
 
 **¿Que pasa si Copilot genera codigo incorrecto?**
 Itera. El feedback loop es: generar → verificar → corregir. Con las instrucciones bien configuradas, la primera generacion es mucho mas precisa.
