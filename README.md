@@ -389,7 +389,9 @@ VS Code analiza el workspace y genera un archivo de **instrucciones siempre acti
 
 ### Paso 1.2: Revisar y afinar
 
-`/init` da un buen punto de partida, pero tu mandas. Abrelo y ajustalo. El repo ya incluye un ejemplo completo en [`.github/copilot-instructions.md`](https://github.com/enriquecordero/TaskFlow/blob/main/.github/copilot-instructions.md).
+`/init` da un buen punto de partida, pero tu mandas. Abre **el archivo que te genero** — `AGENTS.md` o `.github/copilot-instructions.md`, segun tu version — y ajustalo. Como referencia, la rama `main` incluye un ejemplo completo en el formato clasico: [`.github/copilot-instructions.md`](https://github.com/enriquecordero/TaskFlow/blob/main/.github/copilot-instructions.md).
+
+> Las buenas practicas de abajo valen para **ambos formatos**: solo cambia el nombre y la ubicacion del archivo, no *como* se redactan las reglas.
 
 Buenas practicas al redactar instructions:
 
@@ -410,7 +412,7 @@ Crea un endpoint GET /tasks que devuelva una lista de tareas.
 
 Compara con el resultado del Ejercicio 0. Ahora el resultado **ya respeta DTOs, manejo de errores y estilo**. El contexto vino del archivo, no de ti.
 
-> **Momento wow:** En la respuesta del chat, abre la seccion **References** para confirmar que `copilot-instructions.md` se uso.
+> **Momento wow:** En la respuesta del chat, abre la seccion **References** para confirmar que tu archivo de instrucciones (`AGENTS.md` o `copilot-instructions.md`) se uso.
 
 **Deshaz los cambios** antes de continuar.
 
