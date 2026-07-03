@@ -424,35 +424,94 @@ Compara con el resultado del Ejercicio 0. Ahora el resultado **ya respeta DTOs, 
 
 > **Objetivo:** reglas que solo apliquen a ciertos archivos (tests, Angular, C#), sin contaminar todo el contexto.
 
-> **Vas a crear cuatro archivos de instructions**, cada uno acotado con `applyTo`. Genéralos con **`/create-instruction`** (VS Code te pregunta el patrón y las reglas) o escríbelos a mano en `.github/instructions/`. Cuando los tengas, los pruebas en el Paso 2.5. La [solución completa está en `main`](https://github.com/enriquecordero/TaskFlow/tree/main/.github/instructions) para comparar.
+> Vas a crear cuatro archivos en `.github/instructions/`, cada uno acotado con `applyTo`. Aquí tienes **el contenido y el porqué** de cada uno — escríbelos directamente (o genera un borrador con `/create-instruction` y ajústalo). Los pruebas en el Paso 2.5.
 
 ---
 
 ### Paso 2.1: Crea las instructions de C#
 
-Crea **`.github/instructions/csharp.instructions.md`** con `applyTo: "TaskFlow.Api/**/*.cs"` en el frontmatter, y define las convenciones de C#: `record` para DTOs, `AsNoTracking()` en lecturas, validar con FluentValidation, errores con `Results.Problem`. Al terminar, compáralo con la [solución en main](https://github.com/enriquecordero/TaskFlow/blob/main/.github/instructions/csharp.instructions.md).
+Crea **`.github/instructions/csharp.instructions.md`** con este contenido:
 
-> **Por que no `**/*.cs`?** Si aplicara a todo el C#, las reglas de endpoints (`AsNoTracking`, `Results.Problem`) tambien cargarian al editar tests, donde no aplican. Scoping al proyecto de la API mantiene cada capa con sus reglas. Ese es el punto de `applyTo`.
+```markdown
+---
+applyTo: "TaskFlow.Api/**/*.cs"
+---
+
+# Convenciones C# para la API
+
+- Usa `record` para los DTOs (request y response).
+- Usa primary constructors cuando sea posible.
+- Usa `AsNoTracking()` en consultas de solo lectura.
+- Respuestas con `Results.Ok()`, `Results.Created()`, `Results.Problem()`, `Results.NoContent()`.
+- Valida con FluentValidation; si falla, retorna `Results.ValidationProblem()`.
+```
+
+**¿Por qué el glob `TaskFlow.Api/**/*.cs` y no `**/*.cs`?** Si aplicara a todo el C#, estas reglas de endpoints (`AsNoTracking`, `Results.Problem`) también cargarían al editar tests, donde no aplican. Acotarlo al proyecto de la API mantiene cada capa con sus propias reglas. Ese es el punto de `applyTo`.
 
 ---
 
 ### Paso 2.2: Crea las instructions de tests
 
-Crea **`.github/instructions/tests.instructions.md`** con `applyTo: "**/*Tests*.cs,**/*Test.cs"`. Define: xUnit + FluentAssertions, patron Arrange-Act-Assert, nombres descriptivos y el aislamiento de la BD InMemory por test. Compara con la [solución en main](https://github.com/enriquecordero/TaskFlow/blob/main/.github/instructions/tests.instructions.md).
+Crea **`.github/instructions/tests.instructions.md`**:
+
+```markdown
+---
+applyTo: "**/*Tests*.cs,**/*Test.cs"
+---
+
+# Convenciones de tests
+
+- Framework: xUnit + FluentAssertions.
+- Patrón Arrange-Act-Assert con comentarios `// Arrange`, `// Act`, `// Assert`.
+- Tests de integración con `WebApplicationFactory<Program>`.
+- Aísla la BD InMemory por test: `UseInMemoryDatabase($"TaskFlow-{Guid.NewGuid()}")`.
+- Nombres descriptivos: `Metodo_Escenario_ResultadoEsperado`.
+```
+
+**¿Por qué un archivo aparte para los tests?** Sus convenciones (AAA, `WebApplicationFactory`, aislamiento InMemory) no tienen que ver con las de endpoints. Con su propio glob cargan **solo** al editar un archivo de test — y no ensucian el contexto cuando trabajas en la API.
 
 ---
 
 ### Paso 2.3: Crea las instructions de Angular
 
-Crea **`.github/instructions/angular.instructions.md`** con `applyTo: "TaskFlow.Web/**/*.ts,TaskFlow.Web/**/*.html,TaskFlow.Web/**/*.scss"`. Define: standalone components, signals, `inject()`, `@if`/`@for`, sin `CommonModule`. Compara con la [solución en main](https://github.com/enriquecordero/TaskFlow/blob/main/.github/instructions/angular.instructions.md).
+Crea **`.github/instructions/angular.instructions.md`**:
+
+```markdown
+---
+applyTo: "TaskFlow.Web/**/*.ts,TaskFlow.Web/**/*.html,TaskFlow.Web/**/*.scss"
+---
+
+# Convenciones Angular 19
+
+- Standalone components (sin NgModules).
+- `signal()` para estado; `inject()` en vez de constructor.
+- Control flow `@if`/`@for` (no `*ngIf`/`*ngFor`); sin `CommonModule`.
+- Rutas con lazy `loadComponent`.
+- URL del API desde `environment.apiUrl`, nunca hardcodeada.
+```
+
+**¿Por qué separado del C#?** Es otra capa, otro lenguaje, otras reglas. El glob apunta solo a `TaskFlow.Web/`, así que Copilot aplica esto al tocar un `.ts`/`.html`/`.scss` del frontend — y las reglas de C# ni aparecen.
 
 ---
 
 ### Paso 2.4: Crea las instructions de tests Angular
 
-Crea **`.github/instructions/angular-tests.instructions.md`** con `applyTo: "TaskFlow.Web/**/*.spec.ts"`. Define: Jasmine + Karma, `TestBed`, `provideHttpClientTesting`, `HttpTestingController`. Compara con la [solución en main](https://github.com/enriquecordero/TaskFlow/blob/main/.github/instructions/angular-tests.instructions.md).
+Crea **`.github/instructions/angular-tests.instructions.md`**:
 
-Fijate en el glob: solo aplica a archivos `.spec.ts` dentro de `TaskFlow.Web/`. Esto demuestra que puedes tener **multiples instructions para la misma tecnologia** con globs cada vez mas especificos.
+```markdown
+---
+applyTo: "TaskFlow.Web/**/*.spec.ts"
+---
+
+# Convenciones de tests Angular
+
+- Jasmine + Karma.
+- `TestBed` con `provideHttpClientTesting`.
+- `HttpTestingController` para verificar las llamadas HTTP.
+- `fixture.detectChanges()` para disparar la detección de cambios.
+```
+
+**Fíjate en el glob:** es más específico que el de Angular (`.spec.ts` dentro de `TaskFlow.Web/`). Demuestra que puedes tener **varias instructions para la misma tecnología** con globs cada vez más finos: la regla general de Angular (2.3) y la de sus tests (2.4) conviven sin pisarse.
 
 ---
 
