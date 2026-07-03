@@ -1055,19 +1055,14 @@ git restore TaskFlow.Api TaskFlow.Web TaskFlow.Tests && git clean -fd TaskFlow.A
 
 ### Paso 6.1: Crear la configuracion
 
-Crea **`.vscode/mcp.json`** con tres servidores — cada uno cubre una necesidad real de *este* proyecto:
+Crea **`.vscode/mcp.json`** con dos servidores — cada uno cubre una necesidad real de *este* proyecto:
 
-- **github** (HTTP): datos reales del repo (issues, PRs).
 - **microsoft.docs.mcp** (HTTP): doc oficial y al día de .NET / ASP.NET / EF Core — para el **backend**.
 - **angular-cli** (stdio): doc + tooling de Angular 19 (busca en la doc, best practices, corre build/test) — para el **frontend**.
 
 ```json
 {
   "servers": {
-    "github": {
-      "type": "http",
-      "url": "https://api.githubcopilot.com/mcp/"
-    },
     "microsoft.docs.mcp": {
       "type": "http",
       "url": "https://learn.microsoft.com/api/mcp"
@@ -1082,7 +1077,7 @@ Crea **`.vscode/mcp.json`** con tres servidores — cada uno cubre una necesidad
 }
 ```
 
-> **El beneficio (por qué estos tres):** el modelo conoce versiones más viejas que las tuyas (.NET 10, Angular 19). Los MCP de doc le dan la **referencia real y actual** en vez de que la adivine — menos alucinaciones de API. Y el Angular MCP hace **más que doc**: lee `angular.json` y corre `build`/`test`/`lint`. Los tres son **oficiales y sin API key**.
+> **El beneficio (por qué estos dos):** el modelo conoce versiones más viejas que las tuyas (.NET 10, Angular 19). Los MCP de doc le dan la **referencia real y actual** en vez de que la adivine — menos alucinaciones de API. Y el Angular MCP hace **más que doc**: lee `angular.json` y corre `build`/`test`/`lint`. Ambos son **oficiales y sin API key**.
 
 > **`type` y `cwd`:** `http` para servers remotos, `stdio` para procesos locales (el campo `type` es requerido). El `angular-cli` lleva `cwd: "${workspaceFolder}/TaskFlow.Web"` porque el `angular.json` vive en esa subcarpeta, no en la raíz — sin eso, sus tools de workspace (`list_projects`, `run_target`) no encontrarían el proyecto.
 
@@ -1090,13 +1085,7 @@ Crea **`.vscode/mcp.json`** con tres servidores — cada uno cubre una necesidad
 
 ### Paso 6.2: Usarlo
 
-Prueba los tres servidores:
-
-**Datos del repo (github):**
-```
-Lista los issues abiertos de este repo y propon en cuales podriamos
-empezar por la feature de notificaciones.
-```
+Prueba los dos servidores:
 
 **Doc de backend (microsoft.docs.mcp):**
 ```
@@ -1111,7 +1100,7 @@ con signals, consultando la doc.
 
 **Verificar:** Copilot consulta datos y documentación **reales y actuales**, no lo que "medio recuerda" del entrenamiento.
 
-> **Seguridad:** revisa siempre qué hace un servidor MCP antes de conectarlo. Las aprobaciones de VS Code cubren edición de archivos, ejecución de comandos y uso de herramientas (no solo la terminal). Ojo: `angular-cli` corre `npx -y @angular/cli`, que **descarga y ejecuta** un paquete de npm (riesgo de cadena de suministro); los servers HTTP (`github`, `microsoft.docs.mcp`) envían tus prompts a un servicio remoto.
+> **Seguridad:** revisa siempre qué hace un servidor MCP antes de conectarlo. Las aprobaciones de VS Code cubren edición de archivos, ejecución de comandos y uso de herramientas (no solo la terminal). Ojo: `angular-cli` corre `npx -y @angular/cli`, que **descarga y ejecuta** un paquete de npm (riesgo de cadena de suministro); el server HTTP (`microsoft.docs.mcp`) envía tus prompts a un servicio remoto.
 
 ---
 
