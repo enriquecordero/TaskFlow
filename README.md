@@ -243,7 +243,7 @@ Este repo tiene dos ramas a propósito:
 | **`inicio`** | La app + este README, **sin** `.github/` ni `.vscode/mcp.json` | **Empieza aquí.** Construyes toda la configuración de Copilot tú mismo, ejercicio por ejercicio. |
 | **`main`** | Todo lo anterior **+ la configuración completa** (`.github/`, MCP) | La **solución de referencia**. Compárala cuando termines cada ejercicio. |
 
-> **Importante:** el Ejercicio 0 solo funciona desde `inicio`. Si empiezas en `main`, Copilot ya tiene la configuración y generará buen código desde el principio — nunca sentirás el "antes". A partir del Ejercicio 1 **construyes** cada archivo de configuración tú mismo; los enlaces de *"referencia"* / *"solución en main"* apuntan a la rama `main` para que compares.
+> **Importante:** el Ejercicio 0 solo funciona desde `inicio`. Si empiezas en `main`, Copilot ya tiene la configuración y generará buen código desde el principio — nunca sentirás el "antes". A partir del Ejercicio 1 **construyes** cada archivo de configuración tú mismo: el contenido completo de cada uno está en su ejercicio (no necesitas salir del README). La rama `main` tiene la versión final montada por si quieres verla funcionando.
 
 ### Clonar y Levantar
 
@@ -545,21 +545,100 @@ Crea un componente para mostrar el detalle de una tarea.
 
 > **Objetivo:** convertir un prompt largo y repetido en **un comando**.
 
-> Crea los dos prompt files con **`/create-prompt`** (o a mano en `.github/prompts/`). [Solución completa en `main`](https://github.com/enriquecordero/TaskFlow/tree/main/.github/prompts).
+> Aquí tienes el contenido completo de los dos prompt files. Créalos en `.github/prompts/` (o genera un borrador con **`/create-prompt`** y pégalo).
 
 ---
 
 ### Paso 3.1: Prompt para recursos backend
 
-Crea **`.github/prompts/nuevo-recurso.prompt.md`** ([referencia](https://github.com/enriquecordero/TaskFlow/blob/main/.github/prompts/nuevo-recurso.prompt.md)): un prompt parametrizable que crea, para un recurso dado, su entidad, DTO, validador, endpoints CRUD, tests y registro en `Program.cs`.
+Crea **`.github/prompts/nuevo-recurso.prompt.md`**:
 
-> **Sintaxis de parametros (oficial de VS Code):** el prompt usa `${input:recurso:NombreDelRecurso}` para pedir un valor, y `argument-hint` en el frontmatter para sugerir que escribir. Al invocarlo pasas el binding con `recurso=...`. No existe la sintaxis `{{variable}}` ni filtros tipo `| lowercase` — el casing se describe en prosa y lo aplica el agente.
+````markdown
+---
+description: Crea un recurso CRUD completo con DTOs, validadores, endpoints y tests.
+argument-hint: recurso=<NombreDelRecurso>
+agent: agent
+---
+
+# Nuevo recurso CRUD: ${input:recurso:NombreDelRecurso}
+
+Crea una feature completa para el recurso **${input:recurso}** siguiendo la arquitectura del proyecto.
+
+> En los pasos, `{Recurso}` es el nombre en **PascalCase** y `{recurso}` en **minusculas** (para carpetas, archivos y rutas URL). Mira `Features/Tasks/` como referencia del patron.
+
+1. **Entidad** en `Domain/{Recurso}.cs`
+2. **DTOs** en `Features/{Recurso}s/{Recurso}Dto.cs`:
+   - `{Recurso}Response` (record)
+   - `Create{Recurso}Request` (record)
+   - `Update{Recurso}Request` (record)
+3. **Validadores** en `Features/{Recurso}s/{Recurso}Validators.cs` con FluentValidation
+4. **Endpoints** en `Features/{Recurso}s/{Recurso}Endpoints.cs`:
+   - GET /{recurso}s — listar todos
+   - GET /{recurso}s/{id:int} — obtener por id
+   - POST /{recurso}s — crear
+   - PUT /{recurso}s/{id:int} — actualizar
+   - DELETE /{recurso}s/{id:int} — eliminar
+5. **Registrar** los endpoints en `Program.cs`
+6. **Tests** en `TaskFlow.Tests/{Recurso}EndpointsTests.cs`
+7. Actualizar el `DbContext` si hace falta
+
+Si no se especifican las propiedades de la entidad, **pregunta al usuario** antes de asumirlas.
+
+Sigue todas las convenciones del proyecto (DTOs, validacion, Results.Problem, nombres).
+````
+
+> **Sintaxis de parámetros (lo no obvio):** `${input:recurso:NombreDelRecurso}` es la sintaxis **oficial** de VS Code para pedir un valor, y `argument-hint` en el frontmatter sugiere qué escribir. Al invocarlo pasas el binding con `recurso=...`. **No existe** la sintaxis `{{variable}}` ni filtros tipo `| lowercase` — por eso el casing (`{Recurso}` vs `{recurso}`) se describe en prosa y lo aplica el agente al generar.
 
 ---
 
 ### Paso 3.2: Prompt para componentes Angular
 
-Crea **`.github/prompts/nuevo-componente.prompt.md`** ([referencia](https://github.com/enriquecordero/TaskFlow/blob/main/.github/prompts/nuevo-componente.prompt.md)): genera un componente Angular completo — modelo, servicio, componente standalone con signals, ruta con lazy loading, link de navegacion y un test del servicio (`.spec.ts`).
+Crea **`.github/prompts/nuevo-componente.prompt.md`**:
+
+````markdown
+---
+description: Crea un componente Angular completo con servicio, modelo, ruta y test.
+argument-hint: recurso=<NombreDelRecurso>
+agent: agent
+---
+
+# Nuevo componente Angular: ${input:recurso:NombreDelRecurso}
+
+Crea una feature completa en el frontend Angular para el recurso **${input:recurso}**.
+
+> En los pasos, `{Recurso}` es el nombre en **PascalCase** y `{recurso}` en **minusculas** (para carpetas, archivos y rutas). Mira `features/tasks/` como referencia.
+
+> **Prerequisito:** el recurso debe existir en el backend para poder espejar sus DTOs.
+
+1. **Modelo** en `TaskFlow.Web/src/app/models/{recurso}.model.ts`:
+   - Interfaces `{Recurso}Response`, `Create{Recurso}Request`, `Update{Recurso}Request`
+   - Deben espejar los DTOs del backend
+
+2. **Servicio** en `TaskFlow.Web/src/app/services/{recurso}.service.ts`:
+   - CRUD completo con `HttpClient`
+   - `{ providedIn: 'root' }`
+   - Usa `inject(HttpClient)` y `environment.apiUrl`
+
+3. **Componente** en `TaskFlow.Web/src/app/features/{recurso}s/{recurso}-list.component.ts`:
+   - Standalone component con signals
+   - Formulario de creacion
+   - Lista con acciones (editar, eliminar)
+   - Manejo de errores con signal `error`
+
+4. **Ruta** en `app.routes.ts`:
+   - Lazy loading con `loadComponent`
+
+5. **Navegacion** en `app.component.ts`:
+   - Agregar link en la nav
+
+6. **Test** en `TaskFlow.Web/src/app/services/{recurso}.service.spec.ts`:
+   - Test basico del servicio con `provideHttpClientTesting`
+   - Verifica que las llamadas HTTP apuntan a las URLs correctas
+
+Sigue las convenciones de Angular del proyecto (signals, inject, standalone, @if/@for).
+````
+
+> **Por qué separar backend y frontend en dos prompts:** cada uno vive en su capa y se invoca por separado (`/nuevo-recurso` primero, `/nuevo-componente` después, cuando el backend ya expone los DTOs a espejar).
 
 ---
 
@@ -591,25 +670,137 @@ Un solo comando genera toda la feature en Angular.
 
 > **Objetivo:** crear "personas" especializadas con sus propias instrucciones.
 
-> Crea los tres agentes con **`/create-agent`** (o a mano en `.github/agents/`). [Solución completa en `main`](https://github.com/enriquecordero/TaskFlow/tree/main/.github/agents).
+> Aquí tienes los tres agentes completos. Créalos en `.github/agents/` (o genera un borrador con **`/create-agent`** y pégalo).
 
 ---
 
 ### Paso 4.1: Agente revisor
 
-Crea **`.github/agents/revisor.agent.md`** ([referencia](https://github.com/enriquecordero/TaskFlow/blob/main/.github/agents/revisor.agent.md)): un revisor de codigo que comprueba convenciones y **no edita, solo reporta** con severidades (error, warning, sugerencia). Fijate en el frontmatter `tools:` con solo herramientas de lectura — eso es lo que le impide editar.
+Crea **`.github/agents/revisor.agent.md`**:
+
+`````markdown
+---
+name: revisor
+description: Revisa codigo C# y Angular buscando problemas de convenciones, seguridad y calidad. Solo reporta, no edita.
+tools: ['search/codebase', 'search/usages', 'web/fetch']
+---
+
+# Agente Revisor
+
+Eres un revisor de codigo senior especializado en .NET y Angular. Tu trabajo es **revisar, no editar**.
+
+> Este agente declara solo tools de lectura/busqueda (sin `edit`), asi que puede explorar el codebase pero **no puede modificar archivos** — el patron oficial de agente solo-lectura. Una lista vacia `tools: []` lo dejaria sin poder leer el codigo.
+
+## Que revisas
+
+### Backend (.NET)
+- Que se usen DTOs y no se expongan entidades directamente.
+- Que la validacion use FluentValidation.
+- Que los errores usen `Results.Problem` / `ProblemDetails`.
+- Convenciones de nombres (PascalCase, camelCase, _camelCase).
+- Que los tests sigan Arrange-Act-Assert.
+- Que los endpoints tengan tests correspondientes.
+- Posibles problemas de seguridad o rendimiento.
+
+### Frontend (Angular)
+- Que los componentes sean standalone (sin NgModules).
+- Que usen `inject()` en lugar de constructor injection.
+- Que usen `@if`/`@for` en lugar de `*ngIf`/`*ngFor`.
+- Que no importen `CommonModule` innecesariamente.
+- Que los modelos espejen los DTOs del backend.
+
+## Formato de reporte
+
+Para cada hallazgo indica:
+- **Archivo y linea**
+- **Severidad**: error | warning | sugerencia
+- **Descripcion** del problema
+- **Recomendacion** de como corregirlo
+
+### Ejemplo
+
+```
+- TaskEndpoints.cs:17 | warning | El MapGet devuelve entidades sin mapear a DTO
+  → Crear TaskResponse record y usar MapToResponse()
+```
+
+No hagas cambios en el codigo. Solo reporta.
+`````
+
+> **La clave está en `tools:`.** Al declarar solo herramientas de lectura/búsqueda (sin `edit`), el agente **puede leer el codebase pero no modificarlo** — es el patrón oficial de agente solo-lectura. Una lista vacía `tools: []` lo dejaría ciego (sin poder leer). Eso es lo que garantiza que "revisa, no edita".
 
 ---
 
 ### Paso 4.2: Agente API Builder
 
-Crea **`.github/agents/api-builder.agent.md`** ([referencia](https://github.com/enriquecordero/TaskFlow/blob/main/.github/agents/api-builder.agent.md)): especializado en Minimal APIs de .NET, con foco en endpoints, DTOs y validacion.
+Crea **`.github/agents/api-builder.agent.md`**:
+
+````markdown
+---
+name: api-builder
+description: Especialista en construir endpoints con Minimal APIs de .NET 10. Crea endpoints, DTOs y validadores.
+---
+
+# Agente API Builder
+
+Eres un desarrollador especializado en **Minimal APIs de .NET 10**. Tu foco es construir endpoints RESTful completos.
+
+## Tu flujo de trabajo
+
+1. Analiza el recurso solicitado.
+2. Crea la entidad de dominio si no existe.
+3. Crea DTOs de request y response como `record`.
+4. Crea validadores con FluentValidation.
+5. Implementa endpoints CRUD en un `MapGroup`.
+6. Registra los endpoints en `Program.cs`.
+7. Añade el `DbSet` al contexto si es necesario.
+
+## Reglas
+
+- Siempre usa DTOs, nunca expongas entidades.
+- Valida con FluentValidation antes de procesar.
+- Usa `Results.Problem` para errores.
+- Usa `AsNoTracking()` en lecturas.
+- Organiza por feature: `Features/{Recurso}/`.
+````
 
 ---
 
 ### Paso 4.3: Agente Frontend Builder
 
-Crea **`.github/agents/frontend-builder.agent.md`** ([referencia](https://github.com/enriquecordero/TaskFlow/blob/main/.github/agents/frontend-builder.agent.md)): especialista en Angular 19, construye componentes standalone con signals conectados al backend.
+Crea **`.github/agents/frontend-builder.agent.md`**:
+
+````markdown
+---
+name: frontend-builder
+description: Especialista en Angular 19. Crea componentes, servicios y rutas con standalone components y signals.
+---
+
+# Agente Frontend Builder
+
+Eres un desarrollador especializado en **Angular 19** con standalone components. Tu foco es construir features de UI conectadas al backend .NET.
+
+## Tu flujo de trabajo
+
+1. Analiza el recurso o feature solicitada.
+2. Crea o actualiza el modelo (interface) espejando los DTOs del backend.
+3. Crea el servicio HTTP con CRUD completo.
+4. Implementa el componente standalone con signals y el nuevo control flow.
+5. Registra la ruta con lazy loading.
+6. Actualiza la navegación si es necesario.
+
+## Reglas
+
+- Siempre usa standalone components (sin NgModules).
+- Usa `signal()` y `computed()` para estado reactivo, no propiedades mutables.
+- Inyecta con `inject()`, no por constructor.
+- Usa `@if`, `@for`, `@switch` en templates.
+- Los modelos deben espejar exactamente los DTOs del backend.
+- Maneja errores de HTTP mostrando feedback al usuario.
+- Usa lazy loading con `loadComponent` en las rutas.
+````
+
+> **Instructions vs Agents:** las instructions (Ejercicio 2) aplican a **todo** el chat según el archivo que tocas. Un agente es un **rol** que eliges: cambia el foco y las reglas de *esa* conversación. Nota que `api-builder` y `frontend-builder` no declaran `tools:` → heredan todas (pueden escribir); el `revisor` sí las restringe.
 
 ---
 
@@ -643,56 +834,145 @@ Crea un endpoint para buscar tareas por titulo.
 
 > **Objetivo:** capacidades que Copilot **carga solo cuando hace falta** — no saturan el contexto.
 
-> Crea los dos skills con **`/create-skill`** (o a mano en `.github/skills/<nombre>/SKILL.md`). [Solución completa en `main`](https://github.com/enriquecordero/TaskFlow/tree/main/.github/skills).
+> Aquí tienes los dos skills completos. Créalos en `.github/skills/<nombre>/SKILL.md` (o genera un borrador con **`/create-skill`** y pégalo).
 
 ---
 
 ### Paso 5.1: Skill de migraciones EF Core
 
-Crea **`.github/skills/migracion-ef/SKILL.md`** ([referencia](https://github.com/enriquecordero/TaskFlow/blob/main/.github/skills/migracion-ef/SKILL.md)): ensena a Copilot el procedimiento para crear y aplicar migraciones.
+Crea **`.github/skills/migracion-ef/SKILL.md`**:
 
-Añádele tambien un **script auxiliar** (`crear-migracion.sh`) que encadene build + add + update en un solo comando (la revision de la migracion la haces tu). Asi ves que los skills **pueden contener archivos adicionales** (scripts, templates, configs) junto al `SKILL.md`.
-
-> **Nota:** Este proyecto usa `InMemoryDatabase`. Las migraciones se crean pero no tienen efecto real — es un ejercicio pedagogico. Con un proveedor real (SQL Server, PostgreSQL) los pasos son identicos.
-
-**Anatomia de un skill — el frontmatter es clave:**
-
-```yaml
+`````markdown
 ---
-name: migracion-ef          # debe coincidir con el nombre de la carpeta
-description: Crea y aplica migraciones de EF Core en TaskFlow.
+name: migracion-ef
+description: Crea y aplica migraciones de EF Core en TaskFlow. Usalo cuando cambien las entidades del dominio, el modelo de datos, o necesites actualizar el esquema de base de datos.
 ---
+
+# Migracion de EF Core
+
+## Cuando usar
+
+Cuando se modifica una entidad en `Domain/`, se anade un nuevo `DbSet` al contexto, o se cambia la configuracion del modelo.
+
+## Procedimiento
+
+1. Verifica que los cambios en las entidades compilan: `dotnet build`
+2. Crea la migracion:
+   ```bash
+   dotnet ef migrations add <NombreDescriptivo> --project TaskFlow.Api
+   ```
+3. Revisa el archivo de migracion generado en `Migrations/`.
+4. Aplica la migracion:
+   ```bash
+   dotnet ef database update --project TaskFlow.Api
+   ```
+
+## Script auxiliar
+
+Este skill incluye `crear-migracion.sh` que automatiza los pasos de **build + add + update** en un solo comando. Ejecutalo desde la raiz del repo:
+
+```bash
+bash .github/skills/migracion-ef/crear-migracion.sh AddDueDateToTask
 ```
 
-Copilot solo lee `name` + `description` de todos tus skills (barato). **Carga el cuerpo completo solo cuando tu tarea coincide** con la descripcion.
+El script compila, crea la migracion y la aplica (`set -e`, falla rapido). **No** cubre el paso 3 (revisar la migracion generada): hazlo a mano antes de aplicar en un proyecto real.
 
-> **Detalle que rompe un skill en silencio:** el `name` debe coincidir con el nombre de la carpeta. Si no coincide, el skill no carga y no hay error visible.
+## Nota sobre InMemory
+
+Este proyecto usa `InMemoryDatabase` para desarrollo. Con InMemory, las migraciones **se crean pero no tienen efecto real** — el esquema se genera en memoria al iniciar. Este skill es pedagogico: demuestra el procedimiento para cuando uses un proveedor real (SQL Server, PostgreSQL, etc.).
+
+## Convenciones
+
+- Nombres de migracion descriptivos: `AddDueDateToTask`, `CreateNotificationsTable`.
+- Una migracion por cambio logico — no agrupar cambios no relacionados.
+`````
+
+Y su **script auxiliar** en la misma carpeta, `.github/skills/migracion-ef/crear-migracion.sh`:
+
+```bash
+#!/bin/bash
+# Uso: ./crear-migracion.sh NombreDeLaMigracion
+set -e
+
+MIGRATION_NAME=${1:?"Uso: $0 <NombreDeLaMigracion>"}
+
+echo "Compilando el proyecto..."
+dotnet build TaskFlow.Api
+
+echo "Creando migración: $MIGRATION_NAME"
+dotnet ef migrations add "$MIGRATION_NAME" --project TaskFlow.Api
+
+echo "Aplicando migración..."
+dotnet ef database update --project TaskFlow.Api
+
+echo "Migración '$MIGRATION_NAME' creada y aplicada."
+```
+
+> **Lo no obvio (el frontmatter):** Copilot solo lee `name` + `description` de *todos* tus skills al abrir el chat (barato), y **carga el cuerpo completo solo cuando tu tarea coincide** con la `description`. Por eso puedes tener muchos skills sin saturar el contexto.
+
+> **Detalle que rompe un skill en silencio:** el `name` **debe coincidir** con el nombre de la carpeta (`migracion-ef`). Si no coinciden, el skill no carga y no hay error visible. Además, un skill **puede traer archivos** junto al `SKILL.md` — aquí, el `.sh`.
 
 ---
 
 ### Paso 5.2: Skill caveman-mode (ahorro de tokens)
 
-Crea **`.github/skills/caveman-mode/SKILL.md`** ([referencia](https://github.com/enriquecordero/TaskFlow/blob/main/.github/skills/caveman-mode/SKILL.md)): reduce el consumo de tokens 50-70% haciendo que las respuestas sean ultra-breves sin perder calidad tecnica.
+Crea **`.github/skills/caveman-mode/SKILL.md`** (reduce el consumo de tokens 50-70% con respuestas ultra-breves, sin perder calidad técnica):
 
-**Por que es un skill y no un agent:** como skill se **apila** con cualquier agent. Puedes usar `api-builder` en modo caveman sin duplicar instrucciones. Un agent seria exclusivo — no podrias combinarlo.
+`````markdown
+---
+name: caveman-mode
+description: Modo caveman — respuestas ultra-breves para ahorrar tokens. Activalo cuando pidas modo caveman, respuestas concisas, bajo consumo de tokens, reducir verbosidad, ser breve, o respuestas cortas.
+---
 
-**Invocacion manual:**
+# Caveman Mode — Modo ahorro de tokens
 
-```
-/caveman-mode
-```
+Persona: un experto de pocas palabras, humor seco. Aplica estas reglas de comunicacion a todas tus respuestas mientras este skill este activo. Tu capacidad tecnica no cambia; solo cambia la forma de comunicar.
 
-**Auto-carga — pide algo asi:**
+## Reglas de comunicacion
+
+- **Maximo una frase por idea.** No elaborar salvo que lo pidan.
+- **Objetivo: 50-70% menos tokens** que una respuesta normal.
+- **Formato:** bullets, bloques de codigo cortos, tablas. Nada de parrafos en prosa.
+- **Frases de 3-6 palabras.** Eliminar articulos innecesarios.
+- **Sin relleno:** nada de "Aqui tienes lo que hice", saludos, resumenes, meta-comentarios, disculpas.
+- **Sin emojis.**
+- **Si algo es ambiguo:** una sola pregunta directa, nada mas.
+
+## Que NO cambia
+
+- **El codigo se escribe igual:** legible, bien formateado, con las convenciones del proyecto.
+- **Acceso completo a herramientas:** igual que en modo normal.
+- **Calidad tecnica:** misma calidad de analisis y decisiones.
+
+## Cuando expandir (excepciones)
+
+- El usuario pide "explica" -> dar contexto, pero seguir breve.
+- Logica compleja necesita pseudocodigo -> proporcionarlo.
+
+## Volver al modo normal
+
+Este skill no es un interruptor: aplica mientras la conversacion lo mantenga en contexto. Para volver al tono normal, pide explicitamente "responde normal, sin modo breve" o empieza un chat nuevo.
+
+## Ejemplos
+
+### Normal (sin caveman)
+> He analizado tu codigo y encontre que el endpoint de Tasks no esta usando DTOs para la respuesta.
+> Esto viola las convenciones del proyecto que dicen que nunca debemos exponer entidades de dominio.
+> Voy a crear un TaskResponse record y modificar el endpoint para usarlo.
+> (3 frases, ~45 palabras)
+
+### Caveman
+> Endpoint Tasks expone entidad directamente. Creo TaskResponse DTO. Corrijo.
+> (3 frases, ~10 palabras — 78% menos tokens)
+`````
+
+**Por qué es un skill y no un agent:** como skill se **apila** con cualquier agent — puedes usar `api-builder` en modo caveman sin duplicar instrucciones. Un agent sería exclusivo (eliges uno u otro), no podrías combinarlo.
+
+**Pruébalo** — invócalo a mano con `/caveman-mode`, o deja que se auto-cargue por su `description`:
 
 ```
 Se breve, ahorra tokens. Crea un endpoint para filtrar proyectos por nombre.
 ```
-
-**Resultado normal (sin caveman):**
-> He analizado tu codigo y encontre que necesitas un endpoint de busqueda. Voy a crear un endpoint GET /projects con un query parameter de filtro...
-
-**Resultado caveman:**
-> Endpoint GET /projects?search=. Filtro por nombre. Creo.
 
 ---
 
@@ -742,7 +1022,7 @@ Asi decide Copilot que skill cargar — solo lee el frontmatter (barato) y expan
 
 ### Paso 6.1: Crear la configuracion
 
-Crea **`.vscode/mcp.json`** ([referencia](https://github.com/enriquecordero/TaskFlow/blob/main/.vscode/mcp.json)) con dos servidores:
+Crea **`.vscode/mcp.json`** con dos servidores:
 
 - **github** (HTTP): consultar issues y PRs del repo
 - **filesystem** (stdio, via `npx`): acceso controlado a archivos del proyecto
