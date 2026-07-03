@@ -234,11 +234,23 @@ code --install-extension Angular.ng-template
 
 - Cuenta de GitHub con **Copilot activo**. El plan **Free** incluye Agent mode, instructions y MCP —tecnicamente alcanza—, pero su cuota de chat/agente es **limitada y no ampliable** (no se pueden comprar peticiones extra). Para un taller de ~3.5 h en Agent mode, conviene **Copilot Pro** (o su prueba gratuita) o verificar la cuota restante antes de empezar.
 
+### Dos ramas: empiezas de cero, comparas con la solución
+
+Este repo tiene dos ramas a propósito:
+
+| Rama | Qué es | Para qué |
+|------|--------|----------|
+| **`inicio`** | La app + este README, **sin** `.github/` ni `.vscode/mcp.json` | **Empieza aquí.** Construyes toda la configuración de Copilot tú mismo, ejercicio por ejercicio. |
+| **`main`** | Todo lo anterior **+ la configuración completa** (`.github/`, MCP) | La **solución de referencia**. Compárala cuando termines cada ejercicio. |
+
+> **Importante:** el Ejercicio 0 solo funciona desde `inicio`. Si empiezas en `main`, Copilot ya tiene `copilot-instructions.md` y generará buen código desde el principio — nunca sentirás el "antes". Cuando un paso dice *"el repo ya incluye [archivo]"*, se refiere a la solución en `main`: genera tu versión y compárala.
+
 ### Clonar y Levantar
 
 ```bash
 git clone https://github.com/enriquecordero/TaskFlow.git
 cd TaskFlow
+git checkout inicio          # ← empieza de cero (sin .github/)
 
 # Backend
 dotnet restore TaskFlow.Api
@@ -249,6 +261,8 @@ cd TaskFlow.Web
 npm install
 cd ..
 ```
+
+> **Para comparar con la solución** en cualquier momento: `git diff inicio origin/main -- .github` (o abre la rama `main` en GitHub).
 
 ### Levantar la App
 
