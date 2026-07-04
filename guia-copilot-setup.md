@@ -1,73 +1,95 @@
-# Guía: Cómo configurar un proyecto para trabajar con GitHub Copilot
+# Guía técnica: Configurar GitHub Copilot para TaskFlow (.NET 10 + Angular 19)
 
+> Handoff del workshop **"GitHub Copilot Avanzado"**. Todos los ejemplos son los reales del proyecto TaskFlow.
 > Basado en la documentación oficial de VS Code: [Customize AI in Visual Studio Code](https://code.visualstudio.com/docs/copilot/customization/overview)
 
 ---
 
-## El concepto clave
+## El concepto clave: Context Engineering
 
-Los modelos de IA tienen conocimiento general amplio, **pero no conocen tu codebase ni las prácticas de tu equipo**.
+Los modelos de IA tienen conocimiento general amplio, **pero no conocen tu codebase ni las prácticas de tu equipo** — y menos aún versiones nuevas como .NET 10 o Angular 19, que son más recientes que su entrenamiento.
 
-> *"Think of the AI as a skilled new team member: it writes great code, but doesn't know your conventions, architecture decisions, or preferred libraries."*
-> — VS Code Docs
+> *"Think of the AI as a skilled new team member: it writes great code, but doesn't know your conventions, architecture decisions, or preferred libraries."* — VS Code Docs
 
-La customización es cómo le das ese contexto, para que las respuestas reflejen tus estándares y tu arquitectura. Esto es lo que se conoce como **Context Engineering**.
-
----
-
-## Referencia rápida: ¿Qué herramienta usar?
-
-| Necesidad | Herramienta | Cuándo aplica |
-|---|---|---|
-| Reglas que aplican a todo el proyecto | `copilot-instructions.md` | Siempre, en cada request |
-| Reglas distintas por tipo de archivo | `*.instructions.md` | Cuando los archivos coinciden con el patrón |
-| Tarea repetible que ejecutas frecuente | `*.prompt.md` | Cuando invocas el slash command |
-| Workflow multi-paso con scripts | Agent Skills | Cuando la tarea coincide con la descripción del skill |
-| Persona de IA especializada | Custom Agents | Cuando la seleccionas o un agente te delega |
-| Conectar a APIs o bases de datos externas | MCP Servers | Cuando la tarea requiere la herramienta |
-| Automatizar en puntos del ciclo del agente | Hooks | Cuando el agente llega al evento correspondiente |
-| Tarea autónoma en paralelo sin bloquear editor | Background Agent | Cuando quieres delegar sin interrumpir tu trabajo |
-| Implementar y abrir un PR automáticamente | Cloud Agent | Cuando necesitas colaboración en GitHub |
-| Planificar antes de codificar | Plan Agent | Cuando la tarea es compleja y requiere plan previo |
+La customización es cómo le das ese contexto para que las respuestas reflejen tus estándares. La idea central del workshop: **el contexto no se escribe en cada prompt, se configura una vez en el repo.**
 
 ---
 
-## Paso a paso: Setup de un proyecto nuevo
+## Referencia rápida: ¿qué herramienta usar?
+
+| Necesidad | Herramienta | Cuándo aplica | Ejemplo en TaskFlow |
+|---|---|---|---|
+| Reglas para todo el proyecto | `copilot-instructions.md` / `AGENTS.md` | Siempre, en cada request | "usa DTOs, nunca entidades" |
+| Reglas por tipo de archivo | `*.instructions.md` + `applyTo` | Cuando el archivo coincide con el glob | reglas de C# solo en `TaskFlow.Api/` |
+| Tarea repetible | `*.prompt.md` | Al invocar el slash command | `/nuevo-recurso recurso=Notification` |
+| Workflow con pasos/scripts | Agent Skills | Cuando la tarea coincide con la descripción | `migracion-ef`, `caveman-mode` |
+| Persona de IA especializada | Custom Agents | Al seleccionarla en el chat | `revisor`, `api-builder` |
+| Conectar a datos/servicios reales | MCP Servers | Cuando la tarea requiere la herramienta | doc de .NET 10 / Angular 19 |
+| Automatizar en el ciclo del agente | Hooks | Al llegar al evento (avanzado) | `dotnet format` tras editar |
+
+---
+
+## Setup paso a paso
 
 ### Paso 1 — Generar las instrucciones base con `/init`
 
-En el chat de Copilot (modo Agent), escribe:
+En el chat de Copilot (modo **Agent**), escribe:
 
 ```
 /init
 ```
 
-Copilot analiza tu workspace y genera automáticamente el archivo
-`.github/copilot-instructions.md` con el contexto real de tu proyecto
-(stack detectado, estructura de archivos, patrones de código existentes).
+Copilot analiza el workspace y genera el archivo de **instrucciones siempre activas** con el contexto real (stack detectado, estructura, patrones existentes).
 
-> **Revisa y ajusta** el archivo generado — añade lo que Copilot no pudo inferir:
-> decisiones de arquitectura, librerías preferidas, patrones a evitar.
+> **`AGENTS.md` o `copilot-instructions.md`?** Según tu versión de VS Code, `/init` genera uno u otro. Hacen lo mismo (instrucciones globales siempre activas):
+> - **`AGENTS.md`** (raíz): formato **portable** entre herramientas ([agents.md](https://agents.md)) — lo que hoy suele generar `/init`.
+> - **`.github/copilot-instructions.md`**: específico de Copilot, se combina con los `*.instructions.md` por `applyTo`.
+>
+> Si tienes los dos, VS Code los combina.
+
+**Revisa y ajusta** el archivo generado — en TaskFlow codifica: .NET 10 Minimal APIs por feature, DTOs como `record` (nunca exponer entidades), FluentValidation, errores con `Results.Problem`, Angular 19 standalone + signals + `inject()` + `@if`/`@for`, tests xUnit + FluentAssertions.
 
 ---
 
-### Paso 2 — Añadir instrucciones por tipo de archivo (`*.instructions.md`)
+### Paso 2 — Instrucciones por tipo de archivo (`*.instructions.md`)
 
-Para reglas específicas de una parte del codebase, crea archivos en `.github/instructions/`.
+Para reglas específicas de una capa, crea archivos en `.github/instructions/`. El `applyTo` (glob) hace que solo carguen al tocar archivos que coinciden — así las reglas de backend no contaminan el frontend ni los tests.
 
-**Formato del archivo:**
+**C# de la API** — `.github/instructions/csharp.instructions.md`:
 
 ```markdown
 ---
-name: 'Nombre descriptivo'
-description: 'Qué hace esta instrucción'
-applyTo: 'backend/**'   # glob pattern — omitir = no aplica automáticamente
+applyTo: "TaskFlow.Api/**/*.cs"
 ---
 
-# Reglas aquí en Markdown
-- Usar aws-cdk-lib (CDK v2)
-- Activar CORS en todos los endpoints
+# Convenciones C# para la API
+
+- Usa `record` para los DTOs (request y response).
+- Usa primary constructors cuando sea posible.
+- Usa `AsNoTracking()` en consultas de solo lectura.
+- Respuestas con `Results.Ok()`, `Results.Created()`, `Results.Problem()`, `Results.NoContent()`.
+- Valida con FluentValidation; si falla, retorna `Results.ValidationProblem()`.
 ```
+
+> **Por qué `TaskFlow.Api/**/*.cs` y no `**/*.cs`:** si aplicara a todo el C#, estas reglas de endpoints cargarían también al editar tests, donde no aplican. Acotar por glob es el punto de `applyTo`.
+
+**Angular** — `.github/instructions/angular.instructions.md`:
+
+```markdown
+---
+applyTo: "TaskFlow.Web/**/*.ts,TaskFlow.Web/**/*.html,TaskFlow.Web/**/*.scss"
+---
+
+# Convenciones Angular 19
+
+- Standalone components (sin NgModules).
+- `signal()` para estado; `inject()` en vez de constructor.
+- Control flow `@if`/`@for` (no `*ngIf`/`*ngFor`); sin `CommonModule`.
+- Rutas con lazy `loadComponent`.
+- URL del API desde `environment.apiUrl`, nunca hardcodeada.
+```
+
+**Tests** — `.github/instructions/tests.instructions.md` (con `applyTo: "**/*Tests*.cs,**/*Test.cs"`): xUnit + FluentAssertions, Arrange-Act-Assert, `WebApplicationFactory<Program>`, y aislar la BD InMemory por test con `UseInMemoryDatabase($"TaskFlow-{Guid.NewGuid()}")`.
 
 **Cómo crearlo:**
 
@@ -75,40 +97,47 @@ applyTo: 'backend/**'   # glob pattern — omitir = no aplica automáticamente
 /create-instruction
 ```
 
-Describe la convención y Copilot genera el archivo con el `applyTo` correcto.
-
-> **Prioridad de instrucciones** (cuando hay conflicto):
-> 1. Instrucciones personales (user-level)
-> 2. Instrucciones del repositorio (`.github/copilot-instructions.md`)
-> 3. Instrucciones de la organización
+> **Prioridad** (cuando hay conflicto): 1) instrucciones personales (user-level) → 2) del repositorio → 3) de la organización.
 
 ---
 
-### Paso 3 — Crear prompts para tareas repetibles (`*.prompt.md`)
+### Paso 3 — Prompt files para tareas repetibles (`*.prompt.md`)
 
-Para tareas que ejecutas frecuentemente (crear un componente, preparar un PR,
-generar tests), crea prompt files en `.github/prompts/`.
+Para tareas frecuentes (crear un recurso, un componente), crea prompt files en `.github/prompts/`.
 
-**Formato del archivo:**
+**`nuevo-recurso.prompt.md`** — crea un recurso CRUD completo:
 
 ```markdown
 ---
-description: 'Scaffoldea una nueva Lambda function'
-name: 'new-lambda'
+description: Crea un recurso CRUD completo con DTOs, validadores, endpoints y tests.
+argument-hint: recurso=<NombreDelRecurso>
 agent: agent
-tools: [createFile, readFile]
 ---
 
-Crea una nueva Lambda function en `backend/lambda/${input:name}/index.ts`
-siguiendo el patrón existente en `backend/lambda/hello/index.ts`.
-Incluye handler exportado, CORS headers y try/catch.
+# Nuevo recurso CRUD: ${input:recurso:NombreDelRecurso}
+
+Crea una feature completa para el recurso **${input:recurso}**:
+1. Entidad en `Domain/{Recurso}.cs`
+2. DTOs (`record`) en `Features/{Recurso}s/{Recurso}Dto.cs`
+3. Validadores con FluentValidation
+4. Endpoints CRUD en un `MapGroup` (`/{recurso}s`, `/{recurso}s/{id:int}`)
+5. Registrar en `Program.cs`
+6. Tests en `TaskFlow.Tests/`
+
+Si no se especifican las propiedades de la entidad, pregunta al usuario antes de asumirlas.
 ```
 
-**Cómo invocarlo en chat:**
+**Cómo invocarlo:**
 
 ```
-/new-lambda
+/nuevo-recurso recurso=Notification
 ```
+
+> **Sintaxis de parámetros (lo no obvio):** `${input:recurso:NombreDelRecurso}` es la sintaxis **oficial** de VS Code, y `argument-hint` sugiere qué escribir. Al invocar pasas el binding con `recurso=...`. **No existe** `{{variable}}` ni filtros tipo `| lowercase` — el casing se describe en prosa y lo aplica el agente.
+>
+> **Guardarraíl útil:** la línea *"pregunta al usuario antes de asumirlas"* hace que Copilot **te consulte** las propiedades de la entidad en vez de inventarlas. Un buen prompt pregunta, no alucina.
+
+Análogo: **`nuevo-componente.prompt.md`** crea la feature Angular (modelo, servicio, componente standalone, ruta lazy, test).
 
 **Cómo crearlo:**
 
@@ -120,44 +149,46 @@ Incluye handler exportado, CORS headers y try/catch.
 
 ### Paso 4 — Empaquetar workflows como Agent Skills
 
-Para capacidades reutilizables y complejas (deploy, testing, debugging),
-crea una carpeta en `.github/skills/`.
+Para capacidades reutilizables cargadas bajo demanda, crea carpetas en `.github/skills/`.
 
 > Docs oficiales: [Use Agent Skills in VS Code](https://code.visualstudio.com/docs/copilot/customization/agent-skills)
 
-**Estructura — el nombre del directorio DEBE coincidir con el campo `name` del SKILL.md:**
+**Estructura — el nombre del directorio DEBE coincidir con el campo `name`:**
 
 ```
 .github/skills/
-└── aws-deploy/           ← nombre del directorio = valor del campo `name`
-    ├── SKILL.md          ← instrucciones principales (requerido)
-    ├── scripts/          ← scripts ejecutables (opcional)
-    └── examples/         ← ejemplos de referencia (opcional)
+├── migracion-ef/
+│   ├── SKILL.md              ← instrucciones (requerido)
+│   └── crear-migracion.sh    ← script auxiliar (opcional)
+└── caveman-mode/
+    └── SKILL.md
 ```
 
-**Formato del SKILL.md:**
+**Frontmatter del SKILL.md (ejemplo `migracion-ef`):**
 
 ```markdown
 ---
-name: aws-deploy              # requerido — debe coincidir con el nombre del directorio
-description: >                # requerido — describe QUÉ hace y CUÁNDO usarlo (máx. 1024 chars)
-  Guía paso a paso para deployar el stack CDK en AWS.
-  Úsalo cuando necesites deployar o actualizar la infraestructura.
-argument-hint: '[ambiente]'   # opcional — hint en el input del chat
-user-invocable: true          # opcional — si aparece como slash command (default: true)
-disable-model-invocation: false # opcional — si el agente puede cargarlo automáticamente
+name: migracion-ef                # requerido — DEBE coincidir con el nombre del directorio
+description: >                     # requerido — QUÉ hace y CUÁNDO usarlo
+  Crea y aplica migraciones de EF Core en TaskFlow. Usalo cuando cambien
+  las entidades del dominio o necesites actualizar el esquema de base de datos.
 ---
 
-# Instrucciones detalladas aquí en Markdown
+# Migración de EF Core
+## Procedimiento
+1. dotnet build
+2. dotnet ef migrations add <Nombre> --project TaskFlow.Api
+3. Revisar la migración generada
+4. dotnet ef database update --project TaskFlow.Api
 ```
 
 **Cómo lo carga Copilot (3 niveles progresivos):**
 
-1. **Descubrimiento** — Copilot siempre lee `name` y `description` del frontmatter (ligero)
-2. **Carga de instrucciones** — cuando el request coincide con la descripción, carga el body del `SKILL.md`
-3. **Acceso a recursos** — solo carga scripts/ejemplos cuando los necesita
+1. **Descubrimiento** — siempre lee `name` + `description` de todos los skills (barato).
+2. **Carga de instrucciones** — cuando el request coincide con la descripción, carga el body del `SKILL.md`.
+3. **Acceso a recursos** — solo carga scripts/ejemplos cuando los necesita.
 
-Este sistema permite tener muchos skills instalados sin saturar el contexto.
+Así puedes tener muchos skills sin saturar el contexto. En TaskFlow: `migracion-ef` (procedimiento + script) y `caveman-mode` (respuestas breves, ahorra 50-70% de tokens; se **apila** con cualquier agente).
 
 **Cómo crearlo:**
 
@@ -165,56 +196,36 @@ Este sistema permite tener muchos skills instalados sin saturar el contexto.
 /create-skill
 ```
 
-> Los Agent Skills son un **open standard** ([agentskills.io](https://agentskills.io)) que funciona
-> en VS Code, GitHub Copilot CLI y GitHub Copilot coding agent — portables entre herramientas.
+> Los Agent Skills son un **open standard** ([agentskills.io](https://agentskills.io)), portables entre VS Code, Copilot CLI y coding agent. Angular publica los suyos oficiales ([angular.dev/ai/agent-skills](https://angular.dev/ai/agent-skills)).
 
 ---
 
-### Paso 5 — Crear Custom Agents para roles especializados
+### Paso 5 — Custom Agents para roles especializados
 
-Para personas de IA especializadas (DBA, Frontend Lead, Security Reviewer),
-crea archivos `.agent.md` en `.github/agents/`.
+Para personas de IA especializadas, crea archivos `.agent.md` en `.github/agents/`.
 
-> Docs oficiales: [Custom agents in VS Code](https://code.visualstudio.com/docs/copilot/customization/custom-agents)
-> Disponibles desde VS Code 1.106. Antes se llamaban **custom chat modes** (`.chatmode.md` → renombrar a `.agent.md`)
+> Docs oficiales: [Custom agents in VS Code](https://code.visualstudio.com/docs/copilot/customization/custom-agents). Disponibles desde VS Code 1.106 (antes: **custom chat modes**, `.chatmode.md`).
 
-**Formato del archivo:**
+**`revisor.agent.md`** — revisor que **solo reporta, no edita**:
 
 ```markdown
 ---
-name: 'aws-cdk-expert'
-description: 'Especialista en infraestructura AWS CDK. Úsalo para crear o modificar stacks.'
-tools: [createFile, editFiles, runInTerminal]
-agents: []                    # subagentes permitidos — [] = ninguno, * = todos
-model: 'Claude Sonnet 4.5 (copilot)'  # opcional — modelo específico para este agente
-user-invocable: true          # opcional — si aparece en el dropdown de agentes
-handoffs:                     # opcional — botones de transición a otro agente
-  - label: 'Revisar seguridad'
-    agent: security-reviewer
-    prompt: 'Revisa el código CDK generado buscando problemas de seguridad.'
-    send: false               # true = envía el prompt automáticamente
+name: revisor
+description: Revisa codigo C# y Angular buscando problemas de convenciones, seguridad y calidad. Solo reporta, no edita.
+tools: ['search/codebase', 'search/usages', 'web/fetch']
 ---
 
-Eres un experto en AWS CDK v2 con TypeScript.
-Solo usas aws-cdk-lib. Siempre validas con cdk synth antes de deploy.
+Eres un revisor de codigo senior en .NET y Angular. Tu trabajo es revisar, no editar.
+Revisas: DTOs vs entidades, FluentValidation, Results.Problem, nombres,
+tests con Arrange-Act-Assert, standalone + inject() + @if/@for.
+Reportas con: archivo:linea | severidad | descripcion | recomendacion.
 ```
 
-**Handoffs — workflows guiados entre agentes:**
+> **La clave está en `tools:`.** Al declarar solo herramientas de lectura/búsqueda (sin `edit`), el agente **puede leer el codebase pero no modificarlo** — el patrón oficial de agente solo-lectura. Una lista vacía `tools: []` lo dejaría ciego. Los otros dos agentes (`api-builder`, `frontend-builder`) **no** declaran `tools`, así que heredan todas (pueden escribir).
 
-Los handoffs permiten crear flujos multi-paso donde el desarrollador aprueba
-cada transición. Ejemplos típicos:
+Los otros roles de TaskFlow: **`api-builder`** (Minimal APIs de .NET) y **`frontend-builder`** (Angular 19 con signals).
 
-```
-Planning Agent → Implementation Agent → Security Review Agent
-```
-
-Después de cada respuesta, aparecen botones que llevan al siguiente agente
-con contexto pre-cargado.
-
-**Compatibilidad con Claude Code:**
-
-VS Code también detecta archivos `.md` en `.claude/agents/` siguiendo el formato
-de sub-agents de Claude Code — mismas definiciones funcionan en ambas herramientas.
+**Campos opcionales útiles:** `model` (fija un modelo concreto), `user-invocable` (si aparece en el dropdown), `handoffs` (botones para pasar a otro agente con contexto, ej. `api-builder → revisor`).
 
 **Cómo crearlo:**
 
@@ -224,302 +235,120 @@ de sub-agents de Claude Code — mismas definiciones funcionan en ambas herramie
 
 ---
 
-### Paso 6 — Configurar Hooks para automatización
+### Paso 6 — MCP: conectar Copilot a documentación y datos reales
 
-Los hooks ejecutan comandos shell en puntos determinísticos del ciclo del agente.
-A diferencia de las instrucciones (que *guían* al agente), los hooks *garantizan*
-que algo ocurre sin importar cómo fue el prompt.
+Los MCP servers conectan Copilot a herramientas y datos externos. En TaskFlow los usamos para que consulte **documentación al día** de .NET 10 y Angular 19 — que son más nuevos que el entrenamiento del modelo, así que sin esto tiende a alucinar APIs.
+
+> Docs oficiales: [MCP servers in VS Code](https://code.visualstudio.com/docs/copilot/customization/mcp-servers)
+
+**`.vscode/mcp.json`:**
+
+```json
+{
+  "servers": {
+    "microsoft.docs.mcp": {
+      "type": "http",
+      "url": "https://learn.microsoft.com/api/mcp"
+    },
+    "angular-cli": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@angular/cli", "mcp"],
+      "cwd": "${workspaceFolder}/TaskFlow.Web"
+    }
+  }
+}
+```
+
+- **microsoft.docs.mcp** (HTTP, oficial, sin API key): doc real de .NET / ASP.NET / EF Core. Ej: *"¿cómo configuro un índice único con Fluent API en EF Core 10? Usa la doc oficial."*
+- **angular-cli** (stdio): doc + tooling de Angular 19 (best practices, corre `build`/`test`, lee `angular.json`). Lleva `cwd` a `TaskFlow.Web` porque el `angular.json` vive en esa subcarpeta.
+
+> **Para proyectos en Azure DevOps:** existe el [MCP oficial de Azure DevOps](https://github.com/microsoft/azure-devops-mcp) (`npx -y @azure-devops/mcp ${input:ado_org}`) que trae work items, PRs y pipelines reales. Requiere `az login` + tu organización. Fíjate en el patrón `inputs` de `mcp.json` para pedir la organización sin hardcodearla.
+
+> **Seguridad:** revisa qué hace un MCP antes de conectarlo. Los `stdio` con `npx` **descargan y ejecutan** un paquete de npm (cadena de suministro); los `http` envían tus prompts a un servicio remoto.
+
+---
+
+### Paso 7 — Hooks (avanzado — fuera del alcance del workshop)
+
+Los hooks ejecutan comandos shell en puntos **determinísticos** del ciclo del agente. A diferencia de las instrucciones (que *guían*), los hooks *garantizan* que algo ocurra sin importar el prompt. El workshop no los cubre, pero aquí van adaptados a TaskFlow.
 
 > Docs oficiales: [Agent hooks in VS Code](https://code.visualstudio.com/docs/copilot/customization/hooks)
 
-#### Eventos disponibles
-
-| Evento | Cuándo dispara | Uso típico |
+| Evento | Cuándo dispara | Uso típico en TaskFlow |
 |---|---|---|
-| `SessionStart` | Al iniciar una sesión nueva | Inyectar contexto, validar estado del proyecto |
-| `UserPromptSubmit` | Cuando el usuario envía un prompt | Auditar requests, añadir contexto del sistema |
-| `PreToolUse` | Antes de que el agente invoque una herramienta | Bloquear operaciones peligrosas |
-| `PostToolUse` | Después de que una herramienta completa | Ejecutar formatter/linter, loguear resultados |
-| `PreCompact` | Antes de compactar el contexto | Exportar estado importante |
-| `SubagentStart` | Cuando se lanza un subagente | Inicializar recursos del subagente |
-| `SubagentStop` | Cuando un subagente termina | Agregar resultados |
-| `Stop` | Al finalizar la sesión del agente | Generar reportes, limpiar recursos |
+| `SessionStart` | Al iniciar sesión | Validar que compila (`dotnet build`) |
+| `PreToolUse` | Antes de invocar una herramienta | Bloquear comandos peligrosos |
+| `PostToolUse` | Tras completar una herramienta | Formatear el archivo editado |
+| `Stop` | Al finalizar | Correr los tests |
 
-#### Ubicación de los archivos
-
-```
-.github/hooks/          ← hooks del proyecto (se commitean con el repo)
-.claude/settings.json   ← hooks locales del workspace
-~/.claude/settings.json ← hooks personales (todos los proyectos)
-```
-
-#### Formato del archivo (`*.json`)
+**Ejemplo: auto-formatear tras editar** — `.github/hooks/post-edit.json`:
 
 ```json
 {
   "hooks": {
-    "NombreDelEvento": [
-      {
-        "type": "command",
-        "command": "comando-a-ejecutar",
-        "timeout": 30
-      }
+    "PostToolUse": [
+      { "type": "command", "command": ".github/hooks/scripts/format-on-edit.sh", "timeout": 30 }
     ]
   }
 }
 ```
 
-#### Cómo el hook controla al agente
+`.github/hooks/scripts/format-on-edit.sh`:
 
-El hook se comunica vía `stdin`/`stdout` con JSON:
+```bash
+#!/bin/bash
+INPUT=$(cat)
+FILE=$(echo "$INPUT" | jq -r '.tool_input.filePath // empty')
+
+if [[ "$FILE" == *.cs ]]; then
+  dotnet format --include "$FILE" 2>/dev/null
+elif [[ "$FILE" == *.ts || "$FILE" == *.html || "$FILE" == *.scss ]]; then
+  (cd TaskFlow.Web && npx prettier --write "$FILE") 2>/dev/null
+fi
+echo '{"continue": true}'
+```
+
+**Resultado:** cada `.cs` se formatea con `dotnet format` y cada `.ts`/`.html`/`.scss` con Prettier, automáticamente, sin pedirlo.
 
 | Exit code | Comportamiento |
 |---|---|
 | `0` | Éxito — el agente continúa |
 | `2` | Error bloqueante — detiene la operación |
-| Otro | Warning — avisa al usuario pero continúa |
+| Otro | Warning — avisa pero continúa |
+
+**Cómo crearlo:** `/create-hook`
 
 ---
 
-#### 🧪 Ejemplo simple: auto-formatear archivos TypeScript después de editarlos
+## Otras capacidades de Copilot en VS Code
 
-**Archivo:** `.github/hooks/post-edit.json`
-
-```json
-{
-  "hooks": {
-    "PostToolUse": [
-      {
-        "type": "command",
-        "command": "node -e \"const input = require('fs').readFileSync('/dev/stdin','utf8'); const data = JSON.parse(input); const file = data.tool_input && data.tool_input.filePath; if (file && (file.endsWith('.ts') || file.endsWith('.js'))) { require('child_process').execSync('npx prettier --write ' + JSON.stringify(file), {stdio:'inherit'}); } \"",
-        "timeout": 30
-      }
-    ]
-  }
-}
-```
-
-O con un script separado (más limpio):
-
-**Archivo:** `.github/hooks/post-edit.json`
-
-```json
-{
-  "hooks": {
-    "PostToolUse": [
-      {
-        "type": "command",
-        "command": ".github/hooks/scripts/format-on-edit.sh",
-        "timeout": 30
-      }
-    ]
-  }
-}
-```
-
-**Archivo:** `.github/hooks/scripts/format-on-edit.sh`
-
-```bash
-#!/bin/bash
-# Lee el input JSON del agente
-INPUT=$(cat)
-
-# Extrae el nombre del archivo editado
-FILE=$(echo "$INPUT" | jq -r '.tool_input.filePath // empty')
-
-# Solo formatear si es un archivo TypeScript o JavaScript
-if [[ "$FILE" == *.ts || "$FILE" == *.js ]]; then
-  npx prettier --write "$FILE"
-  echo '{"continue": true, "systemMessage": "✅ Prettier aplicado en '"$FILE"'"}'
-else
-  echo '{"continue": true}'
-fi
-```
-
-```bash
-# Darle permisos de ejecución (una sola vez)
-chmod +x .github/hooks/scripts/format-on-edit.sh
-```
-
-**Resultado:** cada vez que el agente edite un archivo `.ts` o `.js`, Prettier
-corre automáticamente — sin que el desarrollador tenga que pedirlo.
-
----
-
-#### Ejemplo de hook de seguridad: bloquear `rm -rf`
-
-**Archivo:** `.github/hooks/security.json`
-
-```json
-{
-  "hooks": {
-    "PreToolUse": [
-      {
-        "type": "command",
-        "command": ".github/hooks/scripts/block-dangerous-commands.sh",
-        "timeout": 10
-      }
-    ]
-  }
-}
-```
-
-**Archivo:** `.github/hooks/scripts/block-dangerous-commands.sh`
-
-```bash
-#!/bin/bash
-INPUT=$(cat)
-TOOL=$(echo "$INPUT" | jq -r '.tool_name // empty')
-COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // empty')
-
-# Bloquear comandos destructivos
-if [[ "$TOOL" == "runInTerminal" ]] && echo "$COMMAND" | grep -qE "rm -rf|DROP TABLE|DELETE FROM"; then
-  echo '{"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny", "permissionDecisionReason": "Comando bloqueado por política de seguridad"}}'
-  exit 0
-fi
-
-echo '{"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "allow"}}'
-```
-
-**Cómo crearlo con IA:**
-
-```
-/create-hook
-```
-
----
-
-## Otras capacidades clave de Copilot en VS Code
-
-> Docs oficiales: [GitHub Copilot in VS Code](https://code.visualstudio.com/docs/copilot/overview)
+> Docs: [GitHub Copilot in VS Code](https://code.visualstudio.com/docs/copilot/overview). Todo esto aplica a TaskFlow aunque el workshop se centre en Context Engineering.
 
 ### Modos de agente
 
-Copilot ofrece distintos tipos de agente para cada necesidad. Todos comparten el mismo historial de sesión y puedes hacer **handoff** entre ellos en cualquier momento.
-
-| Tipo | Dónde corre | Para qué úsarlo |
+| Tipo | Dónde corre | Para qué |
 |---|---|---|
-| **Local Agent** | En VS Code, interactivo | Tareas donde necesitas revisar y aprobar cada paso |
-| **Background Agent** | En tu máquina, autónomo | Tareas bien definidas mientras sigues trabajando |
-| **Cloud Agent** | En la nube (GitHub) | Crear un branch + PR automático para revisión del equipo |
-| **Third-party Agents** | Externo (Claude, Codex) | Usar modelos de Anthropic u OpenAI desde el mismo chat |
+| **Local Agent** | En VS Code, interactivo | Revisar y aprobar cada paso |
+| **Background Agent** | En tu máquina, autónomo (Git worktree) | Delegar sin bloquear el editor |
+| **Cloud Agent** | En la nube | Branch + PR automático |
 | **Plan Agent** | En VS Code | Analizar el codebase y generar un plan antes de codificar |
 
----
+Comparten historial de sesión; puedes hacer **handoff** entre ellos. El **Plan Agent** combinado con handoffs orquesta *Plan → Implementación → Revisión* — encaja con los agentes `api-builder` y `revisor` de TaskFlow.
 
-### Background Agents — trabajar en paralelo
+### El piso gratis (no consume peticiones premium)
 
-El agente corre autónomamente en background usando **Git worktrees** — trabaja
-en una carpeta completamente aislada de tu workspace principal.
+- **Inline Suggestions** — completa mientras tipeas (`Tab` acepta). **No** las afectan las custom instructions (solo el chat).
+- **Next Edit Suggestions (NES)** — predice tu **próximo cambio** basado en lo que acabas de editar (ej: cambias un DTO → sugiere actualizar el modelo de Angular que lo espeja).
 
-**Flujo típico:**
+> En el plan **Free** las completions están topadas a ~2.000/mes; en planes de pago, ilimitadas.
 
-```
-1. Describis la tarea en chat
-2. Delegate Session → Background
-3. Sigues trabajando en el editor sin interrupción
-4. El agente reporta progreso en el panel de Sessions
-5. Revisas los cambios y los aplicás con un click
-```
+### Inline Chat (`⌘I`) y Smart Actions
 
-**Cómo iniciarlo:**
-- Desde chat: `Delegate Session dropdown → Background`
-- Desde Command Palette: `Chat: New Background Agent`
-- Desde una sesión local activa: delegar al llegar al punto de implementación
+- **Inline Chat** — chat dentro del editor con diff visual. Ej: *"refactoriza esta función para usar `AsNoTracking()`"*.
+- **Smart Actions** (click derecho / panel de Problems): generar commit message, Fix error, Rename with Copilot, Explain, Generate Tests.
 
-**Worktrees — aislamiento automático:**
-
-VS Code crea automáticamente un Git worktree para cada sesión de background.
-El agente commitea cambios al final de cada turno. Al terminar, podes:
-- Ver los diffs en Source Control
-- Aplicar los cambios al workspace principal
-- Resolver conflictos con la herramienta de merge integrada
-
-> Podés correr **múltiples sesiones de background en paralelo** para tareas independientes.
-
----
-
-### Plan Agent — planificar antes de construir
-
-Antes de escribir código, el Plan Agent analiza el codebase, hace preguntas
-clarificadoras y genera un **plan de implementación paso a paso**.
-
-```
-1. Abrís chat y seleccionás el agente "Plan"
-2. Describís la feature o cambio
-3. El agente analiza tu codebase y genera el plan
-4. Revisas y ajustas el plan
-5. "Start Implementation" → local, background o cloud
-```
-
-Combinado con **Handoffs** en Custom Agents, permite orquestar workflows
-multi-agente completos: Plan → Implementación → Code Review.
-
----
-
-### Inline Suggestions + Next Edit Suggestions
-
-**Inline Suggestions** — sugerencias mientras tipeas:
-- Desde completar una línea hasta implementar funciones completas
-- Acepta con `Tab`, descarta con `Esc`
-- No se ven afectadas por las custom instructions (solo el chat)
-
-**Next Edit Suggestions** *(nuevo)*:
-- Predice el **próximo cambio lógico** basado en lo que acabas de editar
-- No solo completa donde estás, sino que anticipa dónde vas a ir
-- Por ejemplo: cambiás el tipo de un parámetro → sugiere automáticamente actualizar todas las llamadas a esa función
-
----
-
-### Inline Chat (`⌘I`)
-
-Abrís un chat **directamente en el editor** sin cambiar de contexto.
-Describís el cambio y Copilot sugiere los edits in-place con diff visual.
-
-```
-⌘I → "refactoriza esta función para usar async/await"
-     → ve el diff → acepta o rechaza
-```
-
-Ideal para refactors rápidos, explicaciones de código o correcciones puntuales.
-
----
-
-### Smart Actions — AI sin escribir prompts
-
-Acciones predefinidas accesibles con click derecho o desde el panel de problemas:
-
-| Acción | Cómo acceder |
-|---|---|
-| **Generate commit message** | Panel de Source Control → ✨ |
-| **Fix error** | Panel de Problems → click en el error |
-| **Rename symbol** | Click derecho → Rename with Copilot |
-| **Semantic search** | `⌘P` → buscar con lenguaje natural |
-| **Explain code** | Click derecho → Copilot → Explain |
-| **Generate tests** | Click derecho → Copilot → Generate Tests |
-
----
-
-### Browser Agent Testing *(Experimental)*
-
-El agente puede abrir tu web app en un **browser integrado dentro de VS Code**,
-interactuar con ella y verificar que funcione correctamente.
-
-Casos de uso:
-- Verificar que una feature funcione visualmente
-- Detectar layout issues
-- Tomar screenshots para documentación
-- Simular interacciones de usuario
-
-```
-"Abre la app, navega a la página de productos y verifica que el listado cargue correctamente"
-```
-
-> Docs: [Browser agent testing guide](https://code.visualstudio.com/docs/copilot/guides/browser-agent-testing-guide)
-
----
-
-### El mapa completo de Copilot en VS Code
+### El mapa completo
 
 ```
 Editor (sin interrumpir el flujo)
@@ -528,47 +357,48 @@ Editor (sin interrumpir el flujo)
   ├── Inline Chat (⌘I)         ← edits in-place con diff
   └── Smart Actions            ← commit msg, fix, rename, explain
 
-Agentes (tareas completas end-to-end)
-  ├── Local Agent              ← interactivo, contexto del editor
-  ├── Background Agent         ← autónomo, Git worktree, paralelo
-  ├── Cloud Agent              ← branch + PR automático
-  ├── Plan Agent               ← plan → delegar implementación
-  └── Third-party (Claude, Codex) ← desde el mismo chat
+Agentes (tareas end-to-end)
+  ├── Local · Background · Cloud · Plan
+  └── Handoffs entre agentes
 
-Context Engineering (lo que configuras una vez)
-  ├── copilot-instructions.md  ← siempre activo
-  ├── *.instructions.md        ← por archivo/carpeta
-  ├── *.prompt.md              ← slash commands
-  ├── *.agent.md               ← personas especializadas
-  ├── Skills                   ← workflows reutilizables
-  ├── Hooks                    ← automatización determinística
-  └── MCP Servers              ← conexión a APIs externas
+Context Engineering (lo que configuras una vez)  ← el foco del workshop
+  ├── copilot-instructions.md / AGENTS.md  ← siempre activo
+  ├── *.instructions.md                    ← por archivo/carpeta (applyTo)
+  ├── *.prompt.md                          ← slash commands
+  ├── *.agent.md                           ← personas especializadas
+  ├── Skills                               ← workflows bajo demanda
+  ├── MCP Servers                          ← doc/datos reales
+  └── Hooks                                ← automatización determinística
 ```
 
 ---
 
-## Estructura final del proyecto
+## Estructura final del proyecto (TaskFlow)
 
 ```
-mi-proyecto/
-└── .github/
-    ├── copilot-instructions.md      ← SIEMPRE activo (todo el proyecto)
-    ├── instructions/
-    │   ├── backend.instructions.md  ← aplica a backend/**
-    │   ├── frontend.instructions.md ← aplica a frontend/**
-    │   └── tests.instructions.md   ← aplica a **/*.test.ts
-    ├── prompts/
-    │   ├── new-component.prompt.md  ← /new-component
-    │   ├── code-review.prompt.md   ← /code-review
-    │   └── create-pr.prompt.md     ← /create-pr
-    ├── agents/
-    │   ├── backend-lead.agent.md
-    │   └── security-reviewer.agent.md
-    └── skills/
-        ├── deploy/
-        │   └── SKILL.md
-        └── api-testing/
-            └── SKILL.md
+TaskFlow/
+├── .github/
+│   ├── copilot-instructions.md              ← SIEMPRE activo (o AGENTS.md en la raíz)
+│   ├── instructions/
+│   │   ├── csharp.instructions.md           → TaskFlow.Api/**/*.cs
+│   │   ├── tests.instructions.md            → **/*Tests*.cs
+│   │   ├── angular.instructions.md          → TaskFlow.Web/**/*.{ts,html,scss}
+│   │   └── angular-tests.instructions.md    → TaskFlow.Web/**/*.spec.ts
+│   ├── prompts/
+│   │   ├── nuevo-recurso.prompt.md          → /nuevo-recurso recurso=Entidad
+│   │   └── nuevo-componente.prompt.md       → /nuevo-componente recurso=Entidad
+│   ├── agents/
+│   │   ├── revisor.agent.md                 ← solo reporta (tools de lectura)
+│   │   ├── api-builder.agent.md             ← Minimal APIs .NET
+│   │   └── frontend-builder.agent.md        ← Angular 19
+│   └── skills/
+│       ├── migracion-ef/ (SKILL.md + crear-migracion.sh)
+│       └── caveman-mode/SKILL.md
+├── .vscode/
+│   └── mcp.json                             ← microsoft.docs.mcp + angular-cli
+├── TaskFlow.Api/                            ← .NET 10 Minimal API
+├── TaskFlow.Web/                            ← Angular 19
+└── TaskFlow.Tests/                          ← xUnit + FluentAssertions
 ```
 
 ---
@@ -579,32 +409,25 @@ mi-proyecto/
 
 1. **Incluye el razonamiento detrás de las reglas**
    ```
-   ❌ "Usa date-fns para fechas"
-   ✅ "Usa date-fns en lugar de moment.js — moment.js está deprecated y aumenta el bundle size"
+   ❌ "Usa Results.Problem para errores"
+   ✅ "Usa Results.Problem porque unifica los errores como ProblemDetails (RFC 7807), que cualquier cliente puede parsear"
    ```
-
-2. **Muestra patrones preferidos con ejemplos de código concretos**
-   — La IA responde mejor a ejemplos que a reglas abstractas
-
-3. **Enfócate en lo no obvio**
-   — Omite convenciones que ya enforcea un linter o formatter
-
-4. **Reutiliza instrucciones en prompt files y custom agents**
-   — Evita duplicar — usa Markdown links para referenciarlas
-
-5. **Versiona todo en git**
-   — Los archivos en `.github/` se comparten con todo el equipo automáticamente
+2. **Muestra patrones preferidos con código concreto** — la IA responde mejor a ejemplos (DO/DON'T) que a reglas abstractas.
+3. **Enfócate en lo no obvio** — omite lo que ya enforcea un linter o formatter.
+4. **Reutiliza** instrucciones en prompt files y agents con Markdown links, sin duplicar.
+5. **Versiona todo en git** — los archivos en `.github/` se comparten con el equipo (`git clone` y listo). *Ojo:* una instrucción desactualizada (ej. "backend en :5100" tras cambiar el puerto) **miente** al modelo en cada request — mantenlas al día.
 
 ---
 
 ## Diagnóstico y troubleshooting
 
-Si una instrucción no está siendo aplicada:
+Si una instrucción no se aplica:
 
-1. **Ver instrucciones cargadas:** Click derecho en el Chat → `Diagnostics`
-2. **Verificar ubicación:** `.github/copilot-instructions.md` debe estar en la raíz
-3. **Verificar `applyTo`:** El glob pattern debe coincidir con el archivo abierto
-4. **Revisar References:** La sección References en la respuesta del chat muestra qué instrucciones se usaron
+1. **Ver instrucciones cargadas:** click derecho en el Chat → `Diagnostics`.
+2. **Verificar ubicación:** `.github/copilot-instructions.md` (o `AGENTS.md`) en la raíz.
+3. **Verificar `applyTo`:** el glob debe coincidir con el archivo abierto.
+4. **Revisar References:** la sección *References* en la respuesta del chat muestra qué instrucciones se usaron.
+5. **Skill no carga:** el `name` del `SKILL.md` debe coincidir con el nombre de la carpeta (falla en silencio si no).
 
 ---
 
@@ -612,28 +435,17 @@ Si una instrucción no está siendo aplicada:
 
 | Comando en chat | Acción |
 |---|---|
-| `/init` | Genera `copilot-instructions.md` analizando el workspace |
-| `/create-instruction` | Genera un nuevo `*.instructions.md` |
-| `/create-prompt` | Genera un nuevo `*.prompt.md` |
-| `/create-agent` | Genera un nuevo `*.agent.md` |
-| `/create-skill` | Genera una nueva Agent Skill |
-| `/create-hook` | Genera un nuevo Hook |
-| `/instructions` | Abre el menú de instrucciones configuradas |
-| `/prompts` | Abre el menú de prompt files |
+| `/init` | Genera el archivo de instrucciones analizando el workspace |
+| `/create-instruction` | Genera un `*.instructions.md` |
+| `/create-prompt` | Genera un `*.prompt.md` |
+| `/create-agent` | Genera un `*.agent.md` |
+| `/create-skill` | Genera una Agent Skill |
+| `/create-hook` | Genera un Hook |
+| `/instructions`, `/prompts`, `/skills`, `/agents` | Abren los menús de configuración |
 
 ---
 
 ## Recursos oficiales
-
-**Capacidades generales**
-- [GitHub Copilot in VS Code — Overview](https://code.visualstudio.com/docs/copilot/overview)
-- [Agents overview](https://code.visualstudio.com/docs/copilot/agents/overview)
-- [Background Agents](https://code.visualstudio.com/docs/copilot/agents/background-agents)
-- [Cloud Agents](https://code.visualstudio.com/docs/copilot/agents/cloud-agents)
-- [Plan Agent](https://code.visualstudio.com/docs/copilot/agents/planning)
-- [Inline Suggestions](https://code.visualstudio.com/docs/copilot/ai-powered-suggestions)
-- [Smart Actions](https://code.visualstudio.com/docs/copilot/copilot-smart-actions)
-- [Browser Agent Testing Guide](https://code.visualstudio.com/docs/copilot/guides/browser-agent-testing-guide)
 
 **Context Engineering**
 - [Customize AI in VS Code](https://code.visualstudio.com/docs/copilot/customization/overview)
@@ -643,4 +455,15 @@ Si una instrucción no está siendo aplicada:
 - [Agent Skills](https://code.visualstudio.com/docs/copilot/customization/agent-skills)
 - [MCP Servers](https://code.visualstudio.com/docs/copilot/customization/mcp-servers)
 - [Hooks](https://code.visualstudio.com/docs/copilot/customization/hooks)
-- [Awesome Copilot (community examples)](https://github.com/github/awesome-copilot)
+
+**Capacidades generales**
+- [GitHub Copilot in VS Code — Overview](https://code.visualstudio.com/docs/copilot/overview)
+- [Agents overview](https://code.visualstudio.com/docs/copilot/agents/overview)
+- [Awesome Copilot (ejemplos de la comunidad)](https://github.com/github/awesome-copilot)
+
+**Stack de TaskFlow**
+- [.NET 10](https://dotnet.microsoft.com/download) · [Angular 19](https://angular.dev) · [Repo del workshop](https://github.com/enriquecordero/TaskFlow)
+
+---
+
+> Material educativo del workshop **TaskFlow**. Reutiliza esta estructura (`.github/`) en tus proyectos reales — es portable: copia, ajusta las instrucciones a tu dominio y stack.
