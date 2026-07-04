@@ -247,6 +247,19 @@ nav.scrolled{background:rgba(11,10,30,.9);padding-top:.6rem;padding-bottom:.6rem
 }
 @media(max-width:520px){.bento{grid-template-columns:1fr}.bento-item--featured,.bento-item--wide{grid-column:span 1}}
 
+/* ════════ Glosario / Analogías ════════ */
+.s-analogias{background:var(--bg-white)}
+.glossary{max-width:960px;margin:0 auto;display:flex;flex-direction:column}
+.gloss-row{display:grid;grid-template-columns:210px 1fr;gap:clamp(1rem,3vw,2.4rem);align-items:start;padding:1.5rem 0;border-top:1px solid rgba(20,15,60,.09)}
+.gloss-row:last-child{border-bottom:1px solid rgba(20,15,60,.09)}
+.gloss-term{font-family:var(--font-display);font-weight:700;font-size:1.18rem;color:var(--text-primary)}
+.gloss-term .file{display:block;font-family:var(--font-mono);font-size:.7rem;color:var(--brand-primary);margin-top:.35rem;font-weight:400;word-break:break-word}
+.gloss-body .def{color:var(--text-secondary);font-size:1rem;margin-bottom:.7rem;line-height:1.55}
+.gloss-body .analogy{display:flex;gap:.7rem;align-items:baseline;font-size:1.05rem;color:var(--text-primary);line-height:1.5}
+.gloss-body .analogy .tag{font-family:var(--font-mono);font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;color:var(--brand-secondary);border:1px solid rgba(var(--brand-secondary-rgb),.4);border-radius:var(--radius-pill);padding:.22rem .6rem;flex-shrink:0;transform:translateY(-1px)}
+.gloss-body .analogy b{color:var(--brand-primary);font-weight:600}
+@media(max-width:640px){.gloss-row{grid-template-columns:1fr;gap:.5rem}}
+
 /* ════════ 7. ZIGZAG (aprendes) ════════ */
 .s-aprendes{background:var(--gradient-dark);color:#fff}
 .zigzag-wrap{max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:1rem}
@@ -329,6 +342,7 @@ a:focus-visible,.btn:focus-visible{outline:2px solid var(--brand-accent);outline
     <li><a href="#problema">Problema</a></li>
     <li><a href="#agenda">Agenda</a></li>
     <li><a href="#capas">Capas</a></li>
+    <li><a href="#analogias">Glosario</a></li>
     <li><a href="#aprendes">Aprendes</a></li>
     <li><a href="#empezar">Empezar</a></li>
   </ul>
@@ -452,6 +466,59 @@ a:focus-visible,.btn:focus-visible{outline:2px solid var(--brand-accent);outline
       <span class="num">DATOS REALES</span>
       <div><h4>MCP</h4><p>Conecta Copilot a servicios externos — doc oficial de .NET 10 y Angular 19 — para que consulte referencia real en vez de inventarla.</p></div>
       <span class="file">.vscode/mcp.json</span>
+    </div>
+  </div>
+</section>
+
+<!-- 6.5 · GLOSARIO / ANALOGÍAS -->
+<section class="s-analogias" id="analogias">
+  <div class="section-head reveal">
+    <span class="eyebrow on-light">En cristiano</span>
+    <h2>¿Qué es cada pieza?</h2>
+    <p>Copilot es como un <strong>dev nuevo brillante</strong>: escribe buen código, pero no conoce tu casa. Cada feature es una forma de ponerlo al día.</p>
+  </div>
+  <div class="glossary stagger">
+    <div class="gloss-row">
+      <div class="gloss-term">Instructions<span class="file">copilot-instructions.md · AGENTS.md</span></div>
+      <div class="gloss-body">
+        <p class="def">Reglas siempre activas que aplica en cada petición del chat.</p>
+        <p class="analogy"><span class="tag">Es como</span><span>el <b>manual de la casa</b>: lo lee una vez y ya sabe cómo trabajan aquí — no se lo repites cada día.</span></p>
+      </div>
+    </div>
+    <div class="gloss-row">
+      <div class="gloss-term">Prompt files<span class="file">/nuevo-recurso</span></div>
+      <div class="gloss-body">
+        <p class="def">Un procedimiento largo empaquetado en un slash command reutilizable.</p>
+        <p class="analogy"><span class="tag">Es como</span><span>un <b>atajo con nombre</b>: en vez de dictar 7 pasos cada vez, dices una palabra y los hace todos.</span></p>
+      </div>
+    </div>
+    <div class="gloss-row">
+      <div class="gloss-term">Custom Agents<span class="file">.agent.md</span></div>
+      <div class="gloss-body">
+        <p class="def">Un rol especializado con sus propias reglas y herramientas.</p>
+        <p class="analogy"><span class="tag">Es como</span><span><b>cambiar de sombrero</b>: te pones el de "revisor" (solo mira, no toca) o el de "builder" (construye).</span></p>
+      </div>
+    </div>
+    <div class="gloss-row">
+      <div class="gloss-term">Agent Skills<span class="file">SKILL.md</span></div>
+      <div class="gloss-body">
+        <p class="def">Un procedimiento que Copilot carga solo cuando la tarea coincide.</p>
+        <p class="analogy"><span class="tag">Es como</span><span>un <b>manual en la estantería</b>: no lo carga siempre; lo agarra justo cuando lo necesita.</span></p>
+      </div>
+    </div>
+    <div class="gloss-row">
+      <div class="gloss-term">MCP<span class="file">.vscode/mcp.json</span></div>
+      <div class="gloss-body">
+        <p class="def">Conexión a herramientas y datos externos reales.</p>
+        <p class="analogy"><span class="tag">Es como</span><span>un <b>teléfono a la fuente oficial</b>: en vez de adivinar, llama y pregunta a la doc real de .NET y Angular.</span></p>
+      </div>
+    </div>
+    <div class="gloss-row">
+      <div class="gloss-term">Hooks<span class="file">.github/hooks/</span></div>
+      <div class="gloss-body">
+        <p class="def">Comandos que se ejecutan solos en momentos fijos del ciclo del agente.</p>
+        <p class="analogy"><span class="tag">Es como</span><span>un <b>reflejo automático</b>: "cada vez que edites, formatea" — pasa sí o sí, no depende de que lo pidas.</span></p>
+      </div>
     </div>
   </div>
 </section>
